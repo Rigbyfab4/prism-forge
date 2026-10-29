@@ -28,6 +28,8 @@ SIGNALS_PATHS = [
     Path(__file__).parent.parent / "routing" / "signals.json",
 ]
 EVENTS_LOG = Path.home() / ".claude" / "hooks" / "prism_routing_events.jsonl"
+# `prism-forge disable` drops this flag next to the hooks
+DISABLED_FLAG = Path(__file__).parent / ".prism-disabled"
 
 ATTRIBUTION_REMINDER = (
     "All substantive turns require **Name (Role):** attribution on its own line."
@@ -259,6 +261,9 @@ def fallback_directive():
 
 def main():
     data = read_input()
+    if DISABLED_FLAG.exists():
+        # Disabled: no output at all, as if PRISM weren't installed
+        sys.exit(0)
     prompt = str(data.get("prompt", ""))
     transcript_path = data.get("transcript_path", "")
 

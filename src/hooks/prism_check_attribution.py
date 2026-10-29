@@ -28,6 +28,10 @@ def main():
     except Exception:
         input_data = {}
 
+    # `prism-forge disable` drops this flag next to the hooks: no logging, no output
+    if (Path(__file__).parent / ".prism-disabled").exists():
+        return
+
     try:
         transcript_path = input_data.get("transcript_path", "")
         session_id = input_data.get("session_id", "unknown")

@@ -27,6 +27,9 @@ const USAGE = `
     npx prism-forge uninstall [--force]           Remove PRISM installation
     npx prism-forge verify [--drift]              Check installation integrity
     npx prism-forge drift [options]               Check for configuration drift
+    npx prism-forge disable [--path <dir>]        Turn PRISM off without uninstalling
+    npx prism-forge enable                        Turn PRISM back on
+    npx prism-forge status [--path <dir>]         Show whether PRISM is enabled
 
   Options:
     --path <dir>   Override default install directory (~/.claude/rules/prism/)
@@ -42,6 +45,8 @@ const USAGE = `
     npx prism-forge verify                       Verify installation integrity
     npx prism-forge verify --drift               Run drift detection during verify
     npx prism-forge drift                        Check for configuration drift
+    npx prism-forge disable                      Turn PRISM off (files kept, nothing loads)
+    npx prism-forge enable                       Turn PRISM back on
 `.trim();
 
 async function main() {
@@ -90,6 +95,26 @@ async function main() {
       const driftScript = path.join(process.cwd(), 'bin', 'prism-drift.js');
       const result = spawnSync('node', [driftScript, ...args.slice(1)], { stdio: 'inherit' });
       process.exit(result.status ?? 0);
+    }
+
+    case 'disable': {
+      const { runDisable } = await import('../lib/toggle.js');
+      const pathOpt = getFlag('path');
+      await runDisable({ path: pathOpt || undefined });
+      break;
+    }
+
+    case 'enable': {
+      const { runEnable } = await import('../lib/toggle.js');
+      await runEnable();
+      break;
+    }
+
+    case 'status': {
+      const { runStatus } = await import('../lib/toggle.js');
+      const pathOpt = getFlag('path');
+      await runStatus({ path: pathOpt || undefined });
+      break;
     }
 
     default:
