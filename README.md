@@ -46,6 +46,29 @@ Clean removal:
 npx prism-forge uninstall
 ```
 
+## Turning PRISM off and on
+
+To pause PRISM without uninstalling it:
+
+```bash
+npx prism-forge disable
+```
+
+While disabled, Claude Code behaves as if PRISM weren't installed:
+
+- The installed files move from `~/.claude/rules/prism/` to `~/.claude/prism-disabled/prism/`, because Claude Code loads every `.md` file under `~/.claude/rules/` on its own
+- The PRISM block is removed from `~/.claude/CLAUDE.md` (the rest of the file is untouched)
+- The hooks stay registered but exit without output, so nothing is injected or logged. `~/.claude/settings.json` isn't changed
+
+Turn it back on, or check which state you're in:
+
+```bash
+npx prism-forge enable
+npx prism-forge status
+```
+
+Both changes take full effect in your next Claude Code session. Running `install` or `uninstall` while disabled turns PRISM back on first.
+
 ## How It Works
 
 A single beam of light enters a prism and splits into a spectrum of expert perspectives. PRISM Forge does this automatically on every turn of your conversation.
@@ -87,6 +110,8 @@ prism v2.0 ships hooks that enforce persona routing at runtime. On install, thre
 | `prism_session_start.sh` | SessionStart | Inject Turn 1 routing contract |
 | `prism_inject_routing.sh` | UserPromptSubmit | Activate persona based on signals (war room, names, intent keywords) |
 | `prism_check_attribution.py` | Stop | Log drift events to `~/.claude/hooks/prism_routing_events.jsonl` |
+
+`npx prism-forge disable` silences all three hooks without unregistering them (see [Turning PRISM off and on](#turning-prism-off-and-on)).
 
 ### Drift telemetry
 

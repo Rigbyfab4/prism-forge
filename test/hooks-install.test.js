@@ -287,4 +287,27 @@ describe('hooks-install', () => {
       }
     });
   });
+
+  describe('Uninstall removes unregistered .sh wrapper', () => {
+    it('deletes the .sh wrapper copied next to a registered .py', () => {
+      const src = mkdtempSync(join(tmpdir(), 'prism-hooks-wrap-'));
+      const tgt = mkdtempSync(join(tmpdir(), 'prism-hooks-wrap-target-'));
+
+      try {
+        writeFileSync(join(src, 'prism_inject_routing.sh'), '#!/bin/bash\nexec python "${0%.sh}.py" "$@"', 'utf-8');
+        writeFileSync(join(src, 'prism_inject_routing.py'), '#!/usr/bin/env python\nprint("routing")', 'utf-8');
+
+        const manifest = installHooks({ sourceDir: src, targetDir: tgt });
+        assert.equal(manifest.length, 1, 'Only the .py is registered');
+
+        const count = uninstallHooks(manifest);
+        assert.equal(count, 2, 'Both the .py and its .sh wrapper are deleted');
+        assert.equal(existsSync(join(tgt, 'prism_inject_routing.sh')), false, '.sh wrapper should be deleted');
+        assert.equal(existsSync(join(tgt, 'prism_inject_routing.py')), false);
+      } finally {
+        rmSync(src, { recursive: true, force: true });
+        rmSync(tgt, { recursive: true, force: true });
+      }
+    });
+  });
 });
