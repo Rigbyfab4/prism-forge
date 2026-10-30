@@ -1,0 +1,18 @@
+{
+  "name": "prism-toggle",
+  "version": "0.1.0",
+  "description": "One-row PRISM on/off switch above the prompt, plus /prism",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "node": {
+      "type": "string",
+      "title": "Node executable",
+      "description": "Full path to node.exe, used to run the prism-forge CLI. Leave empty for the default in hooks/register.tsx (CONFIG.NODE)."
+    },
+    "cliFromHome": {
+      "type": "string",
+      "title": "prism-forge CLI, relative to home",
+      "description": "Where bin/prism-forge.js of your prism-forge clone is, relative to your home folder. Leave empty for the default in hooks/register.tsx (CONFIG.CLI_FROM_HOME)."
+    }
+  }
+}
