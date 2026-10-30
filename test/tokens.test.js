@@ -4,13 +4,14 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { replaceTokens } from '../lib/tokens.js';
 
-const testTargetDir = join(homedir(), '.claude', 'rules', 'prism');
+const testTargetDir = join(homedir(), '.claude', 'prism');
 
 describe('replaceTokens', () => {
   it('replaces all PRISM tokens with tilde paths', () => {
     const input = 'Read {PRISM_PERSONAS}/persona-analyst-mary.md';
     const result = replaceTokens(input, testTargetDir);
-    assert.ok(result.includes('~/.claude/rules/prism/personas/persona-analyst-mary.md'));
+    assert.ok(result.includes('~/.claude/prism/personas/persona-analyst-mary.md'));
+    assert.ok(!result.includes('rules/prism'));
     assert.ok(!result.includes('{PRISM_PERSONAS}'));
   });
 
@@ -31,7 +32,8 @@ describe('replaceTokens', () => {
   it('replaces claude-md token with base dir', () => {
     const input = '{PRISM_CLAUDE_MD}';
     const result = replaceTokens(input, testTargetDir);
-    assert.ok(result.includes('~/.claude/rules/prism'));
+    assert.ok(result.includes('~/.claude/prism'));
+    assert.ok(!result.includes('rules/prism'));
     assert.ok(!result.includes('{PRISM_CLAUDE_MD}'));
   });
 
@@ -40,6 +42,11 @@ describe('replaceTokens', () => {
     const result = replaceTokens(input, testTargetDir);
     assert.ok(!result.includes('{PRISM_PERSONAS}'));
     assert.ok(!result.includes('{PRISM_ROUTING}'));
+  });
+
+  it('uses the default target (~/.claude/prism) when no target dir is given', () => {
+    const result = replaceTokens('{PRISM_ROUTING}/routing-engine.md');
+    assert.equal(result, '~/.claude/prism/routing/routing-engine.md');
   });
 
   it('returns unchanged string when no tokens present', () => {

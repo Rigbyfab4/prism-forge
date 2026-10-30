@@ -24,7 +24,7 @@ from pathlib import Path
 
 
 SIGNALS_PATHS = [
-    Path.home() / ".claude" / "rules" / "prism" / "routing" / "signals.json",
+    Path.home() / ".claude" / "prism" / "routing" / "signals.json",
     Path(__file__).parent.parent / "routing" / "signals.json",
 ]
 EVENTS_LOG = Path.home() / ".claude" / "hooks" / "prism_routing_events.jsonl"

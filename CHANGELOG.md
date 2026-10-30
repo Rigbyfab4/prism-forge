@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Default install directory moved from `~/.claude/rules/prism` to `~/.claude/prism`. Claude Code auto-loads every `.md` file under `~/.claude/rules/`, so the old location put all 34 PRISM files into every session and defeated on-demand persona loading. The routing engine, hook signal lookup and docs now use the new path.
+- `disable` no longer moves the install directory. It writes the `.prism-disabled` flag and removes the PRISM block from `~/.claude/CLAUDE.md`; the files stay in `~/.claude/prism/`, which Claude Code does not auto-load. `enable` re-injects the block and removes the flag last.
+- `removeBlock` now removes only the delimited PRISM block, and `~/.claude/CLAUDE.md` writes are atomic.
+- The `.prism-disabled` flag file is no longer trusted for paths; the target is recomputed.
+
+### Added
+- `disable` and `enable` take a lock (`~/.claude/hooks/.prism-toggle.lock`) so concurrent runs can't interleave.
+- `install` and `uninstall` automatically migrate a legacy install found at `~/.claude/rules/prism` (or the old stash at `~/.claude/prism-disabled/prism`) to `~/.claude/prism`, rewriting paths by re-running the normal install over it. `enable` on a legacy stash tells the user to run `install`, and `status` points at `install` when only a legacy install exists.
+- `enable --path <dir>`, needed to recompute a custom install target.
+
+### Fixed
+- The session-start hook printed the wrong routing-engine path (`~/.claude/rules/routing-engine.md`); it now prints `~/.claude/prism/routing/routing-engine.md`.
+- The partial-move failure mode of `disable` on Windows is gone, because nothing is moved.
+
 ## [2.0.5] - 2026-05-01
 
 ### Added

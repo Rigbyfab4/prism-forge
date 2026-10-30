@@ -56,9 +56,10 @@ npx prism-forge disable
 
 While disabled, Claude Code behaves as if PRISM weren't installed:
 
-- The installed files move from `~/.claude/rules/prism/` to `~/.claude/prism-disabled/prism/`, because Claude Code loads every `.md` file under `~/.claude/rules/` on its own
-- The PRISM block is removed from `~/.claude/CLAUDE.md` (the rest of the file is untouched)
+- The installed files stay where they are, in `~/.claude/prism/`. Claude Code doesn't load them on its own because they sit outside `~/.claude/rules/` (it auto-loads every `.md` file under `rules/`)
+- The PRISM block is removed from `~/.claude/CLAUDE.md` (the rest of the file is untouched), so the routing engine and personas are no longer read
 - The hooks stay registered but exit without output, so nothing is injected or logged. `~/.claude/settings.json` isn't changed
+- `disable` and `enable` take a lock (`~/.claude/hooks/.prism-toggle.lock`), so two runs can't overlap
 
 Turn it back on, or check which state you're in:
 
@@ -67,7 +68,11 @@ npx prism-forge enable
 npx prism-forge status
 ```
 
-Both changes take full effect in your next Claude Code session. Running `install` or `uninstall` while disabled turns PRISM back on first.
+Both changes take full effect in your next Claude Code session. Running `install` or `uninstall` while disabled turns PRISM back on first. If you installed to a custom directory, pass the same `--path <dir>` to `enable` that you passed to `disable`.
+
+### Upgrading from an older install
+
+Older releases installed to `~/.claude/rules/prism/`, which Claude Code auto-loads in full, so all of PRISM's markdown files entered every session's context. Running `npx prism-forge install` moves a previous install from `~/.claude/rules/prism/` (or the old `~/.claude/prism-disabled/prism/` stash, left by an earlier `disable`) to `~/.claude/prism/` and rewrites the paths in the CLAUDE.md block and routing files. Claude Code sessions that are already running keep the old persona `Read` paths, so those reads fail until you start a new session.
 
 ## How It Works
 
@@ -127,7 +132,7 @@ Target: less than 20% drift on substantive turns (turns longer than 200 chars or
 
 ## What Gets Installed
 
-`npx prism-forge install` writes files to `~/.claude/rules/prism/` and injects a delimited block into `~/.claude/CLAUDE.md`:
+`npx prism-forge install` writes files to `~/.claude/prism/` and injects a delimited block into `~/.claude/CLAUDE.md`:
 
 - **28 persona files** - markdown configuration for each expert
 - **Routing engine** - Susie's orchestration manual for signal-based team assembly

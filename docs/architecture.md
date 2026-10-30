@@ -110,12 +110,15 @@ When no signal or domain match fires, Susie falls back to mode defaults:
 
 ```
 ~/.claude/
-  rules/
+  prism/               # Not under rules/: Claude Code auto-loads every .md in rules/
     personas/          # 28 persona .md files
-    routing-engine.md  # Susie's orchestration manual
-    audit-checklist.md # Structural integrity checks
-  skills/
-    create-persona/    # Persona creation skill
+    routing/
+      routing-engine.md  # Susie's orchestration manual
+      audit-checklist.md # Structural integrity checks
+      signals.json       # Signal table used by the routing hook
+    skills/
+      create-persona/  # Persona creation skill
+  hooks/               # Runtime-enforcement hooks
   CLAUDE.md            # Contains PRISM Forge activation block
 ```
 

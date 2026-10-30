@@ -20,7 +20,7 @@ Running `npx prism-forge install` on a v1.1.0 system automatically:
 
 1. Detects manifest version and triggers migration flow
 2. Backs up v1 files to `.prism-backup/v1-{YYYY-MM-DD}/`
-3. Installs v2 personas and routing engine to `~/.claude/rules/prism/`
+3. Installs v2 personas and routing engine to `~/.claude/prism/`
 4. Writes manifest.json v2.0 schema with hooks and settings entries
 5. Patches `~/.claude/settings.json` with hook registration
 6. Copies three hook scripts to `~/.claude/hooks/`
@@ -51,7 +51,7 @@ If v2 causes issues, you can revert:
 npx prism-forge uninstall
 
 # Restore v1 files from backup
-cp -r .prism-backup/v1-{YYYY-MM-DD}/* ~/.claude/rules/prism/
+cp -r .prism-backup/v1-{YYYY-MM-DD}/* ~/.claude/prism/
 
 # Reinstall npm package
 npm uninstall -g prism-forge
@@ -132,3 +132,26 @@ If drift remains high 1 week after v2 install:
 4. Escalate to v2.1 (template injection support) - file an issue on GitHub
 
 See docs/v2-architecture.md for deeper technical details on drift measurement and event schema.
+
+## Moving to ~/.claude/prism (2.0.6)
+
+Releases up to 2.0.5 installed to `~/.claude/rules/prism/`. Claude Code auto-loads every `.md` file under `~/.claude/rules/`, so all 34 PRISM files (28 personas, the routing engine and the rest) entered every session's context. That defeated the design, where personas are meant to be read on demand. The default install directory is now `~/.claude/prism/`, which Claude Code does not auto-load.
+
+### What `install` does automatically
+
+Run `npx prism-forge install`. If it finds a legacy install at `~/.claude/rules/prism/`, it:
+
+1. Copies the install to `~/.claude/prism/`
+2. Re-runs the normal install over the copy, which rewrites the paths in the `~/.claude/CLAUDE.md` block and in the routing files
+3. Verifies the new copy
+4. Removes `~/.claude/rules/prism/` only after the new copy is verified
+
+`npx prism-forge uninstall` also finds and migrates a legacy install before removing it. Persona `Read` paths in a Claude Code session that is already running still point at the old directory, so they fail until you start a new session.
+
+### Legacy stash from an earlier `disable`
+
+Earlier versions of `disable` moved the install to `~/.claude/prism-disabled/prism/`. `install` migrates that stash to `~/.claude/prism/` the same way. `enable` can't do this safely, so on a legacy stash it tells you to run `install` instead. `disable` no longer moves any files: it writes the `.prism-disabled` flag in `~/.claude/hooks/` and removes the PRISM block from `~/.claude/CLAUDE.md`.
+
+### Rolling back
+
+You don't need a special rollback step. The old directory is removed only after the new copy is verified, so a failed migration leaves the legacy install in place and `install` can be run again. To go back to an older release, run `npx prism-forge uninstall`, then install the older version; it will use its own default location.

@@ -183,7 +183,7 @@ If settings.json is corrupted during patch, a backup `.bak` is created automatic
   "backup_dir": ".prism-backup/v1-2026-04-30/",
   "files": [
     {
-      "path": "~/.claude/rules/prism/routing-engine.md",
+      "path": "~/.claude/prism/routing/routing-engine.md",
       "hash": "sha256-abc123...",
       "version": "2.0.0"
     },

@@ -28,11 +28,11 @@ const USAGE = `
     npx prism-forge verify [--drift]              Check installation integrity
     npx prism-forge drift [options]               Check for configuration drift
     npx prism-forge disable [--path <dir>]        Turn PRISM off without uninstalling
-    npx prism-forge enable                        Turn PRISM back on
+    npx prism-forge enable [--path <dir>]         Turn PRISM back on
     npx prism-forge status [--path <dir>]         Show whether PRISM is enabled
 
   Options:
-    --path <dir>   Override default install directory (~/.claude/rules/prism/)
+    --path <dir>   Override default install directory (~/.claude/prism/)
     --force        Force uninstall (delete entire directory, skip manifest)
     --drift        Run drift check with verify (equivalent to: drift subcommand)
     --help         Show this help message
@@ -106,7 +106,8 @@ async function main() {
 
     case 'enable': {
       const { runEnable } = await import('../lib/toggle.js');
-      await runEnable();
+      const pathOpt = getFlag('path');
+      await runEnable({ path: pathOpt || undefined });
       break;
     }
 
