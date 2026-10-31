@@ -2,6 +2,10 @@
   "name": "prism-toggle",
   "version": "0.1.0",
   "description": "One-row PRISM on/off switch above the prompt, plus /prism",
+  "author": {
+    "name": "Rigbyfab4",
+    "url": "https://github.com/Rigbyfab4/prism-forge"
+  },
   "types": "./types/index.d.ts",
   "userConfig": {
     "node": {
