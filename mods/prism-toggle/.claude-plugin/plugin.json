@@ -4,7 +4,7 @@
   "description": "One-row PRISM on/off switch above the prompt, plus /prism",
   "author": {
     "name": "Rigbyfab4",
-    "url": "https://github.com/Rigbyfab4/prism-forge"
+    "url": "https://github.com/Rigbyfab4"
   },
   "types": "./types/index.d.ts",
   "userConfig": {
