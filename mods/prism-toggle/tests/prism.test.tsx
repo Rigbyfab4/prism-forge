@@ -1,4 +1,5 @@
 import { expect, mock, test } from 'claude-code/testing'
+import type { Engine } from 'claude-code/testing'
 
 const BAND = {
   plugin: 'prism-toggle',
@@ -20,6 +21,10 @@ const OTHER_MD = `${HOME}\\.claude\\rules\\other.md`
 // A file left over from the old install location: the mod never touches it
 const LEGACY_MD = `${HOME}\\.claude\\rules\\prism\\routing\\routing-engine.md`
 const NODE = 'C:\\Program Files\\nodejs\\node.exe'
+
+// The test's `$` is the engine's own, so a call carries what the engine stamps: the person's Enter and the screen
+const runPrism = ($: Engine, args = '') =>
+  $.command.run({ command: 'prism', args, origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 80 } })
 
 const same = (a: string, b: string) => a.replace(/\\/g, '/').toLowerCase() === b.replace(/\\/g, '/').toLowerCase()
 
@@ -115,7 +120,7 @@ test('a band drawn from an old state does not act on it', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: ' off ' })).toBeDefined()
   expect((await ui.find({ key: 'toggle' }))?.props.label).toBe('Turn on')
   // Nothing was switched here, so the model is told nothing
-  expect((await $.prompt.submit({ text: 'hi', origin: { kind: 'user' } })).context).toBe(undefined)
+  expect((await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })).context).toBe(undefined)
   await ui.unmount()
 })
 
@@ -163,18 +168,18 @@ test('/prism toggles, and takes on, off and status', async ($, on) => {
   const { calls } = fakeCli(on, 'off')
   await start($, on)
 
-  expect((await $.command.run({ command: 'prism', args: 'status' })).text).toBe('PRISM is off.')
-  expect((await $.command.run({ command: 'prism' })).text).toBe(`PRISM turned on. ${SWITCHED}`)
-  expect((await $.command.run({ command: 'prism', args: 'on' })).text).toBe('PRISM is already on.')
-  expect((await $.command.run({ command: 'prism', args: 'off' })).text).toBe(`PRISM turned off. ${SWITCHED}`)
-  expect((await $.command.run({ command: 'prism', args: 'sideways' })).text).toBe('Usage: /prism [on|off|status]')
+  expect((await runPrism($, 'status')).text).toBe('PRISM is off.')
+  expect((await runPrism($)).text).toBe(`PRISM turned on. ${SWITCHED}`)
+  expect((await runPrism($, 'on')).text).toBe('PRISM is already on.')
+  expect((await runPrism($, 'off')).text).toBe(`PRISM turned off. ${SWITCHED}`)
+  expect((await runPrism($, 'sideways')).text).toBe('Usage: /prism [on|off|status]')
   expect(calls.filter(c => c !== 'status')).toEqual(['enable', 'disable'])
 })
 
 test('the CLI is run from the home folder the environment names', async ($, on) => {
   const { argvs } = fakeCli(on, 'on')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'off' })
+  await runPrism($, 'off')
 
   expect(argvs.length).toBeGreaterThan(1)
   for (const argv of argvs) {
@@ -228,7 +233,7 @@ test('nothing changes until PRISM is switched', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
 
-  expect((await $.prompt.submit({ text: 'hi', origin: { kind: 'user' } })).context).toBe(undefined)
+  expect((await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })).context).toBe(undefined)
   const ctx = await $.prompt.context({ blocks: [], instructionFiles: LOADED })
   expect(ctx.instructionFiles).toEqual(LOADED)
 })
@@ -236,11 +241,11 @@ test('nothing changes until PRISM is switched', async ($, on) => {
 test('turning off tells the model once and takes the PRISM block out of CLAUDE.md', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'off' })
+  await runPrism($, 'off')
 
-  const first = await $.prompt.submit({ text: 'hi', origin: { kind: 'user' } })
+  const first = await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })
   expect(first.context?.[0]).toMatch(/PRISM was just turned off/)
-  expect((await $.prompt.submit({ text: 'again', origin: { kind: 'user' } })).context).toBe(undefined)
+  expect((await $.prompt.submit({ text: 'again', wait: false, origin: { kind: 'composer' } })).context).toBe(undefined)
 
   // Only CLAUDE.md changes: no other file is dropped or touched
   const ctx = await $.prompt.context({ blocks: [], instructionFiles: LOADED })
@@ -254,9 +259,9 @@ test('turning off tells the model once and takes the PRISM block out of CLAUDE.m
 test('turning on tells the model and puts the PRISM block back in CLAUDE.md', async ($, on) => {
   fakeCli(on, 'off')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'on' })
+  await runPrism($, 'on')
 
-  const first = await $.prompt.submit({ text: 'hi', origin: { kind: 'user' } })
+  const first = await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })
   expect(first.context?.[0]).toMatch(/PRISM was just turned on/)
   expect(first.context?.[0]).toMatch(/Read ~\/\.claude\/prism\/routing\/routing-engine\.md/)
 
@@ -277,7 +282,7 @@ test('turning on tells the model and puts the PRISM block back in CLAUDE.md', as
 test('CLAUDE.md is found whatever the slashes and casing of its path', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'off' })
+  await runPrism($, 'off')
 
   const odd = 'c:/users/tester/.claude/claude.md'
   const ctx = await $.prompt.context({
@@ -296,7 +301,7 @@ test('CLAUDE.md is found whatever the slashes and casing of its path', async ($,
 test('a CLAUDE.md under another home folder is left alone', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'off' })
+  await runPrism($, 'off')
 
   const files = [
     { path: 'C:\\Users\\Rigby\\.claude\\CLAUDE.md', kind: 'user', content: '# Theirs\n## Persona Routing System\n' },
@@ -308,9 +313,9 @@ test('a CLAUDE.md under another home folder is left alone', async ($, on) => {
 test('a slash command does not use up the notice', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
-  await $.command.run({ command: 'prism', args: 'off' })
+  await runPrism($, 'off')
 
-  const cmd = await $.prompt.submit({ text: '/help', command: { name: 'help', args: '' }, origin: { kind: 'user' } })
+  const cmd = await $.prompt.submit({ text: '/help', command: { name: 'help', args: '' }, wait: false, origin: { kind: 'composer' } })
   expect(cmd.context).toBe(undefined)
-  expect((await $.prompt.submit({ text: 'hi', origin: { kind: 'user' } })).context?.[0]).toMatch(/turned off/)
+  expect((await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })).context?.[0]).toMatch(/turned off/)
 })
