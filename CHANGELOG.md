@@ -14,11 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `.prism-disabled` flag file is no longer trusted for paths; the target is recomputed.
 
 ### Added
+- `disable`, `enable` and `status` commands turn PRISM off and back on without uninstalling. While disabled, the three hooks exit with no output (so nothing is injected or logged) via a `~/.claude/hooks/.prism-disabled` flag, and `~/.claude/CLAUDE.md` loses the PRISM block. `install` and `uninstall` restore a disabled install first, and `verify` reports the disabled state instead of failing.
+- `prism-toggle` Claude Code mod (`mods/prism-toggle/`): a one-row PRISM on/off switch above the prompt plus `/prism [on|off|status]`. It drives `prism-forge status|enable|disable`; see its README for setup.
 - `disable` and `enable` take a lock (`~/.claude/hooks/.prism-toggle.lock`) so concurrent runs can't interleave.
 - `install` and `uninstall` automatically migrate a legacy install found at `~/.claude/rules/prism` (or the old stash at `~/.claude/prism-disabled/prism`) to `~/.claude/prism`, rewriting paths by re-running the normal install over it. `enable` on a legacy stash tells the user to run `install`, and `status` points at `install` when only a legacy install exists.
 - `enable --path <dir>`, needed to recompute a custom install target.
 
 ### Fixed
+- `uninstall` left `prism_inject_routing.sh` behind: `install` copies it next to the `.py` it wraps but only the `.py` was registered and recorded. Uninstall now removes a hook's `.sh`/`.py` sibling too, which also cleans up existing installs.
 - The session-start hook printed the wrong routing-engine path (`~/.claude/rules/routing-engine.md`); it now prints `~/.claude/prism/routing/routing-engine.md`.
 - The partial-move failure mode of `disable` on Windows is gone, because nothing is moved.
 

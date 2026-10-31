@@ -658,11 +658,11 @@ describe('toggle', () => {
     for (const [file, input] of cases) {
       it(`${file} prints nothing when disabled and still works when enabled`, () => {
         const off = runHook(file, input, { disabled: true });
-        assert.equal(off.status, 0, off.stderr);
+        assert.equal(off.status, 0, off.error ?? off.stderr);
         assert.equal(off.stdout, '');
 
         const on = runHook(file, input, { disabled: false });
-        assert.equal(on.status, 0, on.stderr);
+        assert.equal(on.status, 0, on.error ?? on.stderr);
         assert.match(on.stdout, /additionalContext/);
       });
     }
@@ -674,12 +674,12 @@ describe('toggle', () => {
       const log = join(home, '.claude', 'hooks', 'prism_routing_events.jsonl');
 
       const off = runHook('prism_check_attribution.py', input, { disabled: true });
-      assert.equal(off.status, 0, off.stderr);
+      assert.equal(off.status, 0, off.error ?? off.stderr);
       assert.equal(off.stdout, '');
       assert.equal(existsSync(log), false, 'no drift event logged');
 
       const on = runHook('prism_check_attribution.py', input, { disabled: false });
-      assert.equal(on.status, 0, on.stderr);
+      assert.equal(on.status, 0, on.error ?? on.stderr);
       assert.ok(existsSync(log), 'event logged when enabled');
     });
   });
