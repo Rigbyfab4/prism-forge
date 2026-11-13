@@ -36,5 +36,8 @@
     "routing",
     "ai-assistants",
     "developer-tools"
-  ]
+  ],
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
 }
