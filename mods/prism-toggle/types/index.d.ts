@@ -10,8 +10,6 @@ declare module 'claude-code' {
       state: PrismState
       isBusy: boolean
       pending: PrismNotice
-      // Whether PRISM was switched in this session, so the loaded CLAUDE.md may be stale
-      hasSwitched: boolean
     }
   }
 }

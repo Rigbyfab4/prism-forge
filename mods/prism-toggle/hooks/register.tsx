@@ -1,10 +1,10 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface as Engine, InstructionFile, PluginOptions, Register } from 'claude-code'
+import type { EngineInterface as Engine, PluginOptions, Register } from 'claude-code'
 
 import type { PrismNotice, PrismState } from '../types'
 
 // The two things this mod cannot derive from the environment. Everything else
-// (the home folder, ~/.claude/CLAUDE.md) is read from USERPROFILE / HOME.
+// (the home folder) is read from USERPROFILE / HOME.
 //
 // Each can also be set per machine without editing this file, as the plugin's
 // `node` and `cliFromHome` options (the config menu, or `pluginConfigs` in
@@ -33,12 +33,6 @@ async function homeDir($: Engine): Promise<string | undefined> {
   return home ? home.replace(/[\\/]+$/, '') : undefined
 }
 
-// ~/.claude/CLAUDE.md, where prism-forge keeps its PRISM block
-async function claudeMdPath($: Engine): Promise<string | undefined> {
-  const home = await homeDir($)
-  return home ? `${home}\\.claude\\CLAUDE.md` : undefined
-}
-
 // Sent beside the next prompt after a switch, so the model stops (or starts)
 // following the PRISM instructions it already holds
 const NOTICES: Record<'on' | 'off', string> = {
@@ -64,7 +58,6 @@ const SPECTRUM = ['#e8352a', '#f58a1f', '#f5d21f', '#3fc23a', '#2f6fe0', '#8a3fd
 const state = atom({ plugin: 'prism-toggle', key: 'state' } as const, 'unknown')
 const isBusy = atom({ plugin: 'prism-toggle', key: 'isBusy' } as const, false)
 const pending = atom({ plugin: 'prism-toggle', key: 'pending' } as const, null as PrismNotice)
-const hasSwitched = atom({ plugin: 'prism-toggle', key: 'hasSwitched' } as const, false)
 
 async function prismForge($: Engine, cfg: Settings, command: 'status' | 'enable' | 'disable', timeoutMs = 20_000) {
   try {
@@ -108,51 +101,15 @@ async function setPrism($: Engine, cfg: Settings, wanted: 'on' | 'off'): Promise
     }
     if (now !== wanted) return `prism-forge ran, but PRISM now reports "${now}".`
 
-    // Tell the model with the next prompt, and have the engine recompute the
-    // instruction files this conversation carries
+    // Tell the model with the next prompt. The instruction files this
+    // conversation already loaded are not resynced: a built-in security plugin
+    // seated ahead of user mods passes prompt.context on past them, so a new
+    // session is what picks up the edited CLAUDE.md.
     await update($, pending, () => wanted)
-    await update($, hasSwitched, () => true)
-    $.ui.invalidate('prompt.context')
     return `PRISM turned ${wanted}. Your next message follows the change; start a new session for the full effect.`
   } finally {
     await update($, isBusy, () => false)
   }
-}
-
-const normalize = (path: string) => path.replace(/\\/g, '/').toLowerCase()
-
-// An instruction file's text as the engine loads it: frontmatter and HTML
-// comments removed
-function asLoaded(text: string): string {
-  return text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').replace(/<!--[\s\S]*?-->/g, '')
-}
-
-async function readText($: Engine, path: string): Promise<string | undefined> {
-  try {
-    return asLoaded((await $.fs.read(path)) as string)
-  } catch {
-    return undefined
-  }
-}
-
-// After a switch, CLAUDE.md takes the text on disk (prism-forge edits its PRISM
-// block there). No other instruction file is added, dropped or changed: PRISM's
-// own files live outside ~/.claude/rules/, so the engine never loads them.
-async function syncClaudeMd($: Engine, files: readonly InstructionFile[]): Promise<InstructionFile[]> {
-  const target = await claudeMdPath($)
-  if (!target) return [...files]
-  const wanted = normalize(target)
-
-  const synced: InstructionFile[] = []
-  for (const file of files) {
-    if (file.kind === 'user' && normalize(file.path) === wanted) {
-      const text = await readText($, file.path)
-      synced.push(text !== undefined && text.trim() !== file.content.trim() ? { ...file, content: text } : file)
-    } else {
-      synced.push(file)
-    }
-  }
-  return synced
 }
 
 export const register: Register = (on, options) => {
@@ -193,14 +150,6 @@ export const register: Register = (on, options) => {
     if (notice === null || e.command) return next(e)
     await update($, pending, () => null)
     return next({ ...e, context: [...(e.context ?? []), NOTICES[notice]] })
-  })
-
-  // After a switch, CLAUDE.md follows what is on disk now
-  on('prompt.context', async ($, e, next) => {
-    const result = await next(e)
-    const files = result.instructionFiles ?? e.instructionFiles
-    if (!files || !(await read($, hasSwitched))) return result
-    return { ...result, instructionFiles: await syncClaudeMd($, files) }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

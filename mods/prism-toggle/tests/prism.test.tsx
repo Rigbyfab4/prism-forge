@@ -16,17 +16,11 @@ const BAND = {
 
 // A fake home that is not the real one: nothing in the mod may depend on it
 const HOME = 'C:\\Users\\Tester'
-const CLAUDE_MD = `${HOME}\\.claude\\CLAUDE.md`
-const OTHER_MD = `${HOME}\\.claude\\rules\\other.md`
-// A file left over from the old install location: the mod never touches it
-const LEGACY_MD = `${HOME}\\.claude\\rules\\prism\\routing\\routing-engine.md`
 const NODE = 'C:\\Program Files\\nodejs\\node.exe'
 
 // The test's `$` is the engine's own, so a call carries what the engine stamps: the person's Enter and the screen
 const runPrism = ($: Engine, args = '') =>
   $.command.run({ command: 'prism', args, origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 80 } })
-
-const same = (a: string, b: string) => a.replace(/\\/g, '/').toLowerCase() === b.replace(/\\/g, '/').toLowerCase()
 
 // Stands in for the prism-forge CLI: answers status/enable/disable like the real one
 function fakeCli(
@@ -39,11 +33,6 @@ function fakeCli(
   const calls: string[] = []
   const argvs: (readonly string[])[] = []
   mock.env(on, env)
-  // The disk as prism-forge leaves it: the CLAUDE.md block only while on
-  on('fs.read', (_: unknown, e: { path: string }) => {
-    if (same(e.path, CLAUDE_MD)) return { value: now === 'on' ? '# Mine\n## Persona Routing System\n' : '# Mine\n' }
-    return { deny: 'ENOENT' }
-  })
   on('process.run', (_: unknown, e: { argv: readonly string[]; init?: { timeoutMs?: number } }) => {
     const cmd = e.argv[2] ?? ''
     argvs.push(e.argv)
@@ -76,7 +65,6 @@ async function start($: any, on: any, toasts: string[] = []) {
   })
   on('ui.invalidate', () => ({ value: undefined }))
   on('prompt.submit', (_: unknown, e: { text: string; context?: string[] }) => ({ text: e.text, context: e.context }))
-  on('prompt.context', (_: unknown, e: any) => ({ blocks: e.blocks, instructionFiles: e.instructionFiles }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
 }
@@ -223,22 +211,14 @@ test(
   },
 )
 
-const LOADED = [
-  { path: CLAUDE_MD, kind: 'user', content: '# Mine\n## Persona Routing System\n' },
-  { path: LEGACY_MD, kind: 'user', content: '# Routing' },
-  { path: OTHER_MD, kind: 'user', content: '# Other' },
-] as const
-
-test('nothing changes until PRISM is switched', async ($, on) => {
+test('nothing is sent beside a prompt until PRISM is switched', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
 
   expect((await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })).context).toBe(undefined)
-  const ctx = await $.prompt.context({ blocks: [], instructionFiles: LOADED })
-  expect(ctx.instructionFiles).toEqual(LOADED)
 })
 
-test('turning off tells the model once and takes the PRISM block out of CLAUDE.md', async ($, on) => {
+test('turning off tells the model once', async ($, on) => {
   fakeCli(on, 'on')
   await start($, on)
   await runPrism($, 'off')
@@ -246,17 +226,9 @@ test('turning off tells the model once and takes the PRISM block out of CLAUDE.m
   const first = await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })
   expect(first.context?.[0]).toMatch(/PRISM was just turned off/)
   expect((await $.prompt.submit({ text: 'again', wait: false, origin: { kind: 'composer' } })).context).toBe(undefined)
-
-  // Only CLAUDE.md changes: no other file is dropped or touched
-  const ctx = await $.prompt.context({ blocks: [], instructionFiles: LOADED })
-  expect(ctx.instructionFiles).toEqual([
-    { path: CLAUDE_MD, kind: 'user', content: '# Mine\n' },
-    { path: LEGACY_MD, kind: 'user', content: '# Routing' },
-    { path: OTHER_MD, kind: 'user', content: '# Other' },
-  ])
 })
 
-test('turning on tells the model and puts the PRISM block back in CLAUDE.md', async ($, on) => {
+test('turning on tells the model to read the routing engine', async ($, on) => {
   fakeCli(on, 'off')
   await start($, on)
   await runPrism($, 'on')
@@ -264,50 +236,6 @@ test('turning on tells the model and puts the PRISM block back in CLAUDE.md', as
   const first = await $.prompt.submit({ text: 'hi', wait: false, origin: { kind: 'composer' } })
   expect(first.context?.[0]).toMatch(/PRISM was just turned on/)
   expect(first.context?.[0]).toMatch(/Read ~\/\.claude\/prism\/routing\/routing-engine\.md/)
-
-  // Nothing is appended: PRISM's files are not loaded as instructions
-  const ctx = await $.prompt.context({
-    blocks: [],
-    instructionFiles: [
-      { path: CLAUDE_MD, kind: 'user', content: '# Mine\n' },
-      { path: OTHER_MD, kind: 'user', content: '# Other' },
-    ],
-  })
-  expect(ctx.instructionFiles).toEqual([
-    { path: CLAUDE_MD, kind: 'user', content: '# Mine\n## Persona Routing System\n' },
-    { path: OTHER_MD, kind: 'user', content: '# Other' },
-  ])
-})
-
-test('CLAUDE.md is found whatever the slashes and casing of its path', async ($, on) => {
-  fakeCli(on, 'on')
-  await start($, on)
-  await runPrism($, 'off')
-
-  const odd = 'c:/users/tester/.claude/claude.md'
-  const ctx = await $.prompt.context({
-    blocks: [],
-    instructionFiles: [
-      { path: odd, kind: 'user', content: '# Mine\n## Persona Routing System\n' },
-      { path: OTHER_MD, kind: 'user', content: '# Other' },
-    ],
-  })
-  expect(ctx.instructionFiles).toEqual([
-    { path: odd, kind: 'user', content: '# Mine\n' },
-    { path: OTHER_MD, kind: 'user', content: '# Other' },
-  ])
-})
-
-test('a CLAUDE.md under another home folder is left alone', async ($, on) => {
-  fakeCli(on, 'on')
-  await start($, on)
-  await runPrism($, 'off')
-
-  const files = [
-    { path: 'C:\\Users\\Rigby\\.claude\\CLAUDE.md', kind: 'user', content: '# Theirs\n## Persona Routing System\n' },
-    { path: 'C:\\proj\\CLAUDE.md', kind: 'project', content: '# Project' },
-  ] as const
-  expect((await $.prompt.context({ blocks: [], instructionFiles: files })).instructionFiles).toEqual(files)
 })
 
 test('a slash command does not use up the notice', async ($, on) => {
