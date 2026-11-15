@@ -1,0 +1,77 @@
+[
+  {
+    "id": "print-petg-stringing",
+    "category": "3d-printing",
+    "tags": ["troubleshooting", "ordering"],
+    "turns": ["My PETG prints are covered in fine strings and blobs. Ender 3 V2 with a direct drive conversion, printing at 245°C with 0.8 mm retraction. What should I try, and in what order?"],
+    "checks": [
+      { "id": "mentions_drying", "type": "regex", "pattern": "\\bdry(ing|er)?\\b|moisture|wet filament|humid" }
+    ],
+    "rubric": [
+      { "id": "drying_early", "text": "Puts drying the filament early in the order, explaining PETG absorbs moisture which causes stringing and blobs." },
+      { "id": "temperature", "text": "Suggests lowering nozzle temperature in steps, ideally with a temperature tower, rather than one arbitrary value." },
+      { "id": "retraction_direct_drive", "text": "Gives retraction advice appropriate to direct drive (short distances, roughly 0.5-2 mm, with speed tuning) and suggests a retraction test." },
+      { "id": "travel_settings", "text": "Mentions at least one travel-related setting (travel speed, combing/avoid crossing perimeters, wipe)." },
+      { "id": "ordered", "text": "Presents the steps in a sensible order, cheapest and most likely fixes first, as the user asked." }
+    ]
+  },
+  {
+    "id": "print-pla-hot-car",
+    "category": "3d-printing",
+    "tags": ["materials", "safety"],
+    "turns": ["I printed a phone mount for my car dashboard in PLA. It's summer in Arizona. Any concerns?"],
+    "checks": [
+      { "id": "names_alternative", "type": "regex", "pattern": "\\bPETG\\b|\\bASA\\b|\\bABS\\b|polycarbonate|\\bPC\\b|nylon" }
+    ],
+    "rubric": [
+      { "id": "softening", "text": "Explains PLA softens and deforms at temperatures around 55-65°C (its glass transition), which a closed car in Arizona summer easily exceeds." },
+      { "id": "better_materials", "text": "Recommends more heat-resistant materials (e.g. PETG, ASA, ABS, PC) and notes UV resistance (ASA is a strong choice for sun exposure)." },
+      { "id": "safety", "text": "Mentions the safety angle: a mount sagging or failing while driving." },
+      { "id": "direct", "text": "Answers directly that yes, this is a real concern, without hedging the main point." }
+    ]
+  },
+  {
+    "id": "print-in-place-hinge",
+    "category": "3d-printing",
+    "tags": ["design", "numbers"],
+    "turns": ["I'm designing a print-in-place hinge in Fusion 360 for FDM with a 0.4 mm nozzle. What clearance should I use between the moving parts, and any other tips?"],
+    "checks": [
+      { "id": "gives_mm", "type": "regex", "pattern": "0\\.[2-6]\\d?\\s?mm" }
+    ],
+    "rubric": [
+      { "id": "clearance_range", "text": "Gives a concrete clearance range typical for FDM (roughly 0.3-0.5 mm) and says it depends on printer calibration." },
+      { "id": "test_print", "text": "Recommends printing a small clearance test first." },
+      { "id": "printability", "text": "Gives design tips for printing without supports in the gap (e.g. orientation, chamfered or conical pins, avoiding flat overhangs inside the joint)." },
+      { "id": "first_layer", "text": "Mentions first-layer squish/elephant's foot fusing parts near the bed, or more clearance where parts touch the bed." }
+    ]
+  },
+  {
+    "id": "print-layer-shift",
+    "category": "3d-printing",
+    "tags": ["troubleshooting", "diagnosis"],
+    "turns": ["Halfway through tall prints, the layers suddenly shift sideways on the X axis. What's going on?"],
+    "checks": [],
+    "rubric": [
+      { "id": "mechanical_causes", "text": "Lists the main mechanical causes: belt tension, a loose pulley grub screw, or binding on the X axis." },
+      { "id": "collision", "text": "Mentions the nozzle catching curled-up or warped parts of the print as a cause, with a fix such as Z-hop or cooling." },
+      { "id": "electrical_speed", "text": "Mentions speed/acceleration too high or the stepper driver overheating or having too little current." },
+      { "id": "diagnostic_order", "text": "Suggests how to tell the causes apart or which to check first, rather than an unordered list." }
+    ]
+  },
+  {
+    "id": "print-cost-calc",
+    "category": "3d-printing",
+    "tags": ["arithmetic"],
+    "notes": "Filament 85/1000 * $22 = $1.87; energy 0.12 kW * 6 h = 0.72 kWh * $0.15 = $0.108; total ≈ $1.98.",
+    "turns": ["My 1 kg spool of PLA cost $22. A print uses 85 g and takes 6 hours on a printer drawing about 120 W. Electricity is $0.15/kWh. What does this print cost me?"],
+    "checks": [
+      { "id": "filament_cost", "type": "regex", "pattern": "1\\.87" },
+      { "id": "total", "type": "regex", "pattern": "1\\.9[78]" }
+    ],
+    "rubric": [
+      { "id": "correct_parts", "text": "Computes filament (about $1.87) and electricity (about $0.11) correctly and totals about $1.98." },
+      { "id": "shows_work", "text": "Shows the calculation briefly so the user can reuse it." },
+      { "id": "concise", "text": "Stays concise; any extra considerations (failed prints, wear) are brief." }
+    ]
+  }
+]

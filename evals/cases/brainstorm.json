@@ -1,0 +1,74 @@
+[
+  {
+    "id": "brain-3dp-app-ideas",
+    "category": "brainstorm",
+    "tags": ["ideation", "count"],
+    "turns": ["Brainstorm 10 app ideas for hobbyist 3D printer owners."],
+    "checks": [
+      { "id": "about_ten", "type": "list_items", "min": 10, "max": 14 }
+    ],
+    "rubric": [
+      { "id": "distinct", "text": "The ideas are genuinely distinct (no two are minor variations of the same app)." },
+      { "id": "real_problems", "text": "Each idea is tied to a specific problem hobbyists actually have (failed prints, filament tracking, calibration, finding models, etc.)." },
+      { "id": "beyond_obvious", "text": "At least three ideas go beyond the obvious (a model marketplace, a basic slicer) or put a fresh angle on them." },
+      { "id": "scannable", "text": "Each idea is described briefly enough to scan the list quickly." }
+    ]
+  },
+  {
+    "id": "brain-weekend-ship",
+    "category": "brainstorm",
+    "tags": ["ideation", "pick-and-plan"],
+    "turns": ["I have one weekend and know React and Supabase. Give me app ideas I could actually ship by Sunday night, then pick the best one and outline the build plan."],
+    "checks": [],
+    "rubric": [
+      { "id": "weekend_scoped", "text": "Ideas are realistically shippable in a weekend by one person." },
+      { "id": "uses_stack", "text": "Plans use React and Supabase (auth, database, storage, edge functions as relevant)." },
+      { "id": "picks_with_reason", "text": "Picks one idea and gives a concrete reason." },
+      { "id": "timeboxed_plan", "text": "The build plan is time-boxed (e.g. Saturday morning/afternoon, Sunday) with an explicit MVP cut line." }
+    ]
+  },
+  {
+    "id": "brain-what-if-todo",
+    "category": "brainstorm",
+    "tags": ["idea-critique", "prism-signal:what-if"],
+    "notes": "'What if' + 'kick around' route to Carson + Dali in Prism.",
+    "turns": ["What if we made a to-do app that deletes tasks you haven't done in 7 days? Kick this idea around with me."],
+    "checks": [],
+    "rubric": [
+      { "id": "engages_specifics", "text": "Engages with this specific idea (forced prioritisation, fresh start) rather than generic to-do app advice." },
+      { "id": "real_downsides", "text": "Names real downsides (anxiety, losing important tasks, users gaming it) honestly." },
+      { "id": "variants", "text": "Proposes concrete variants or mitigations (archive instead of delete, warnings before deletion, a 'still relevant?' prompt)." },
+      { "id": "target_user", "text": "Identifies who would want this." },
+      { "id": "conversational", "text": "Keeps it conversational, ending with a question or next step for the user, as 'kick this around with me' implies." }
+    ]
+  },
+  {
+    "id": "brain-habit-monetize",
+    "category": "brainstorm",
+    "tags": ["ideation", "business"],
+    "turns": ["Brainstorm ways to monetize a free habit-tracking app without showing ads."],
+    "checks": [
+      { "id": "several", "type": "list_items", "min": 5 }
+    ],
+    "rubric": [
+      { "id": "concrete_options", "text": "Options are concrete and distinct (e.g. premium tier, one-time unlock, coaching, team/B2B plans, themes/content)." },
+      { "id": "tradeoffs", "text": "Notes tradeoffs or which options fit a small team best." },
+      { "id": "privacy", "text": "Does not suggest selling user data, or explicitly warns against it." }
+    ]
+  },
+  {
+    "id": "brain-war-room-mobile-web",
+    "category": "brainstorm",
+    "tags": ["decision", "council", "prism-signal:war-room"],
+    "notes": "Prism's flagship 'war room' (all personas, Susie moderates). Baseline gets the same words.",
+    "turns": ["War room: should my two-person startup build a mobile app or a web app first? We're making a tool for landscapers to send quotes to customers."],
+    "checks": [],
+    "rubric": [
+      { "id": "user_context", "text": "Reasons from the landscapers' actual context (quoting on site from a phone, office work at a desk, how customers receive quotes)." },
+      { "id": "decides", "text": "Reaches a clear recommendation (e.g. a mobile-friendly web app or PWA first) with reasons." },
+      { "id": "cheap_validation", "text": "Suggests a cheap way to resolve the key uncertainty (e.g. talking to or watching a few landscapers) before building much." },
+      { "id": "genuine_tradeoffs", "text": "Surfaces real tradeoffs (offline use, camera, app-store friction, development cost for two people) without padding or staged disagreement." }
+    ],
+    "pairwise_focus": "Which response would help a two-person team make the better first-platform decision?"
+  }
+]

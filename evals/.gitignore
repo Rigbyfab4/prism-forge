@@ -1,0 +1,12 @@
+node_modules/
+.cache/
+.e2e/
+# run outputs (keep each flow's _state.json)
+flow/*/
+flow-toggle/*/
+flow/report.html
+flow-toggle/report.html
+flow/summary.md
+flow-toggle/summary.md
+flow/state.json
+flow-toggle/state.json

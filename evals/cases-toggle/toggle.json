@@ -1,0 +1,48 @@
+[
+  {
+    "id": "toggle-off-via-mod",
+    "category": "toggle",
+    "tags": ["mod", "on-to-off"],
+    "notes": "Starts enabled. Turn 1 should carry persona tags (proves Prism is active). /prism off goes through the mod, which sends its 'PRISM was just turned off' notice with the next prompt. Turn 3 should carry none.",
+    "turns": [
+      "Should I learn Rust or Go first for backend work? Give me your recommendation and the main reasons.",
+      { "control": "slash", "text": "/prism off", "expect": "off" },
+      "What would be a good first project in whichever one you picked? Give me your recommendation."
+    ],
+    "checks": [
+      { "id": "on_before", "type": "persona_tags", "turn": 1, "expect": "present" },
+      { "id": "off_after", "type": "persona_tags", "turn": 3, "expect": "absent" }
+    ]
+  },
+  {
+    "id": "toggle-off-via-cli",
+    "category": "toggle",
+    "tags": ["cli-only", "on-to-off"],
+    "notes": "Same as toggle-off-via-mod, but switched with `prism-forge disable` from outside the session: no notice reaches the model. The gap between this case and the mod case is what the mod's notice buys.",
+    "turns": [
+      "Should I learn Rust or Go first for backend work? Give me your recommendation and the main reasons.",
+      { "control": "cli", "command": "disable", "expect": "off" },
+      "What would be a good first project in whichever one you picked? Give me your recommendation."
+    ],
+    "checks": [
+      { "id": "on_before", "type": "persona_tags", "turn": 1, "expect": "present" },
+      { "id": "off_after", "type": "persona_tags", "turn": 3, "expect": "absent" }
+    ]
+  },
+  {
+    "id": "toggle-off-then-on-via-mod",
+    "category": "toggle",
+    "tags": ["mod", "off-to-on"],
+    "notes": "Off then back on in one session. After /prism on the mod tells the model to Read the routing engine again; turn 5 should carry persona tags.",
+    "turns": [
+      { "control": "slash", "text": "/prism off", "expect": "off" },
+      "I'm choosing between PostgreSQL and MongoDB for a small inventory app. Which should I pick and why?",
+      { "control": "slash", "text": "/prism on", "expect": "on" },
+      "And how should I structure the main tables or collections? Give me your recommendation."
+    ],
+    "checks": [
+      { "id": "off_mid", "type": "persona_tags", "turn": 2, "expect": "absent" },
+      { "id": "on_again", "type": "persona_tags", "turn": 4, "expect": "present" }
+    ]
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "id": "tutor-bayes-base-rate",
+    "category": "tutoring",
+    "tags": ["multi-turn", "misconception"],
+    "notes": "Correct posterior: 0.01*0.9 / (0.01*0.9 + 0.99*0.09) = 0.009/0.0981 = 9.2% (about 1 in 11). Student says 90%, then 50%.",
+    "turns": [
+      "I'm studying for a stats exam and Bayes' theorem just isn't clicking. Can you tutor me? Please don't just dump the formula on me - check my understanding as we go.",
+      "Here's one from my practice set: a disease affects 1% of people. A test catches 90% of real cases, and gives a false positive 9% of the time for healthy people. If I test positive, what's the chance I actually have it? I think it's 90%, because the test is 90% accurate.",
+      "Hmm, okay. So is it closer to 50% then?"
+    ],
+    "checks": [
+      { "id": "opener_not_a_lecture", "type": "max_words", "turn": 1, "n": 450 }
+    ],
+    "rubric": [
+      { "id": "diagnoses_base_rate", "text": "Identifies that the student's 90% answer ignores the 1% base rate (confuses P(positive|disease) with P(disease|positive)), rather than just saying it is wrong." },
+      { "id": "never_confirms_wrong", "text": "At no point confirms 90% or 50% as correct or 'close enough'." },
+      { "id": "reaches_correct_value", "text": "By the final turn, either states the correct answer (about 9%, i.e. 0.009/0.0981 = 9.2%, roughly 1 in 11) or walks the student through numbers that lead directly to it. Any number it states is correct." },
+      { "id": "checks_understanding", "text": "Asks the student at least one question that checks their reasoning or has them do a step, as the student requested." },
+      { "id": "concrete_framing", "text": "Uses a concrete framing that makes the base rate tangible (e.g. natural frequencies such as 'out of 1,000 people') rather than only symbols." }
+    ],
+    "pairwise_focus": "Which tutor would leave this student actually understanding why the answer is about 9%, following their request to be checked as they go?"
+  },
+  {
+    "id": "tutor-recursion-beginner",
+    "category": "tutoring",
+    "tags": ["multi-turn", "programming"],
+    "notes": "factorial without a base case recurses forever; with `if n == 1: return 1`, factorial(0) still recurses to -1, -2, ... and hits RecursionError.",
+    "turns": [
+      "I'm learning Python and recursion makes no sense to me. Can you teach me step by step? I learn best by trying things myself.",
+      "I tried writing factorial:\n\n```python\ndef factorial(n):\n    return n * factorial(n - 1)\n```\n\nIt crashes with RecursionError. I think Python just has a bug with big numbers?",
+      "Oh - so I need to tell it when to stop? Like `if n == 1: return 1`? What happens if someone calls factorial(0) then?"
+    ],
+    "checks": [
+      { "id": "names_missing_stop", "type": "regex", "turn": 2, "pattern": "base case|stopping (condition|point)|never stops|no way to stop|infinite(ly)?|forever" },
+      { "id": "suggests_safe_base", "type": "regex", "turn": 3, "pattern": "n\\s*(<=|==)\\s*0|n\\s*<=\\s*1|n\\s*<\\s*2|n\\s*in\\s*\\(0,\\s*1\\)" }
+    ],
+    "rubric": [
+      { "id": "not_a_python_bug", "text": "Explains the crash is caused by the missing base case (the function never stops calling itself), and corrects the idea that it is a Python bug with big numbers." },
+      { "id": "zero_case_correct", "text": "Correctly explains that with only `if n == 1` as the base case, factorial(0) would recurse to -1, -2, ... and still crash, and suggests a base case that handles 0 (e.g. n == 0 or n <= 1)." },
+      { "id": "student_does_work", "text": "Leaves the student something to try or predict themselves at least once, matching 'I learn best by trying things myself', instead of only giving finished code." },
+      { "id": "beginner_level", "text": "Stays at a beginner level: avoids unexplained jargon (stack frames, tail-call optimisation, memoisation) or explains it plainly if used." }
+    ]
+  },
+  {
+    "id": "tutor-sky-blue",
+    "category": "tutoring",
+    "tags": ["multi-turn", "misconception", "science"],
+    "notes": "Rayleigh scattering: shorter wavelengths scatter much more (roughly 1/wavelength^4). Sunsets: light crosses far more atmosphere, most blue is scattered out of the line of sight, reds/oranges remain.",
+    "turns": [
+      "My 10-year-old asked why the sky is blue and I said it reflects the ocean. Then I realized I'm not sure. Can you teach me so I can explain it to her properly?",
+      "So is that also why sunsets are red? The ocean isn't involved there either, right?"
+    ],
+    "checks": [
+      { "id": "mentions_scattering", "type": "regex", "turn": 1, "pattern": "scatter" },
+      { "id": "sunset_path_length", "type": "regex", "turn": 2, "pattern": "(longer|more|thicker) (path|distance|air|atmosphere|way)|travel(s|ling)? (through|across) (much )?more|more of the atmosphere" }
+    ],
+    "rubric": [
+      { "id": "corrects_kindly", "text": "Clearly corrects the ocean-reflection idea (e.g. the sky is blue over deserts and inland too) without making the parent feel foolish." },
+      { "id": "mechanism_correct", "text": "Explains that air molecules scatter shorter (blue) wavelengths of sunlight much more than longer (red) ones, so blue light reaches our eyes from all directions." },
+      { "id": "kid_version", "text": "Gives the parent a short version or analogy they could actually say to a 10-year-old." },
+      { "id": "sunset_correct", "text": "Explains sunsets correctly: at low sun angles light passes through much more atmosphere, so most blue is scattered away before reaching us and reds/oranges remain; confirms the ocean is not involved." },
+      { "id": "no_false_claims", "text": "Makes no false claims (e.g. that blue light is 'absorbed' by air, or that the sky reflects water)." }
+    ]
+  },
+  {
+    "id": "tutor-big-o-quiz",
+    "category": "tutoring",
+    "tags": ["multi-turn", "misconception", "interview"],
+    "notes": "Big-O is asymptotic growth; constants and small n matter. Insertion sort is used in practice for small inputs, e.g. inside hybrid sorts (Timsort, many introsort implementations).",
+    "turns": [
+      "Can you help me understand Big-O notation? I have a technical interview in two weeks.",
+      "Got it. So an O(n^2) algorithm is always slower than an O(n) one, right? That's why nobody uses insertion sort.",
+      "Quiz me with one question so I can check myself."
+    ],
+    "checks": [
+      { "id": "quiz_is_short", "type": "max_words", "turn": 3, "n": 250 },
+      { "id": "quiz_withholds_answer", "type": "not_regex", "turn": 3, "pattern": "\\b(answer|solution)\\s*[:\\-]" },
+      { "id": "quiz_asks", "type": "regex", "turn": 3, "pattern": "\\?" }
+    ],
+    "rubric": [
+      { "id": "corrects_always_slower", "text": "Corrects 'always slower': Big-O describes how cost grows as n gets large; constant factors and small inputs can make an O(n^2) algorithm faster than an O(n) one in practice." },
+      { "id": "insertion_sort_fact", "text": "Corrects 'nobody uses insertion sort', e.g. noting it is fast on small or nearly-sorted inputs and is used inside real hybrid sorts; makes no false claims about which libraries use it." },
+      { "id": "single_question", "text": "In the last turn asks exactly one quiz question (as requested) and does not reveal the answer in the same message." },
+      { "id": "interview_relevant", "text": "Keeps the explanation relevant to a coding interview (e.g. how to reason about or state complexity), not a textbook survey." }
+    ]
+  }
+]

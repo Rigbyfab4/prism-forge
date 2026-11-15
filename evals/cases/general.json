@@ -1,0 +1,79 @@
+[
+  {
+    "id": "gen-percent",
+    "category": "general",
+    "tags": ["trivial", "turn-one"],
+    "notes": "17% of 2,340 = 397.8. A trivial first message: tests whether a session-start sitrep or persona framing gets in the way.",
+    "turns": ["What's 17% of 2,340?"],
+    "checks": [
+      { "id": "correct", "type": "regex", "pattern": "397\\.8" },
+      { "id": "brief", "type": "max_words", "n": 80 },
+      { "id": "no_sitrep", "type": "not_regex", "pattern": "\\bsitrep\\b|Active\\s*/\\s*Blocked" }
+    ],
+    "rubric": [
+      { "id": "answers", "text": "Gives the correct answer, 397.8." },
+      { "id": "no_padding", "text": "Does not pad a one-line answer with unrelated status, orientation or offers." }
+    ]
+  },
+  {
+    "id": "gen-decline-email",
+    "category": "general",
+    "tags": ["writing", "constraint"],
+    "turns": ["Write a short, polite email declining a meeting invite from a vendor named Dana for next Tuesday. I'm not interested in their product. Keep the email under 100 words."],
+    "checks": [
+      { "id": "whole_reply_short", "type": "max_words", "n": 150 },
+      { "id": "names_dana", "type": "regex", "pattern": "\\bDana\\b" }
+    ],
+    "rubric": [
+      { "id": "under_100", "text": "The email itself (excluding any one-line preface) is under 100 words." },
+      { "id": "clear_decline", "text": "Clearly declines and makes clear the user is not interested, so Dana won't follow up hoping for a yes." },
+      { "id": "no_false_promises", "text": "Does not promise future contact the user didn't want (e.g. 'let's reconnect next quarter')." },
+      { "id": "polite", "text": "Polite and professional in tone." }
+    ]
+  },
+  {
+    "id": "gen-ira-bullets",
+    "category": "general",
+    "tags": ["format", "facts"],
+    "turns": ["In exactly 3 bullet points, explain the main difference between a Roth IRA and a traditional IRA."],
+    "checks": [
+      { "id": "three_bullets", "type": "list_items", "min": 3, "max": 3 },
+      { "id": "brief", "type": "max_words", "n": 160 }
+    ],
+    "rubric": [
+      { "id": "tax_timing", "text": "States the core difference correctly: traditional contributions may be tax-deductible and withdrawals are taxed as income; Roth contributions are after-tax and qualified withdrawals are tax-free." },
+      { "id": "no_errors", "text": "Contains no factual errors (e.g. does not say Roth contributions are deductible, or that Roth IRAs have required minimum distributions for the original owner)." },
+      { "id": "format_only", "text": "Uses exactly three bullets and no extra sections." }
+    ]
+  },
+  {
+    "id": "gen-rewrite-decision",
+    "category": "general",
+    "tags": ["judgment", "council"],
+    "notes": "The council use case: a decision where the right answer depends on evidence the user hasn't given.",
+    "turns": ["I'm a solo developer. My side project is a Python Flask app with about 2,000 users. I'm thinking about rewriting it in Go for performance. Should I?"],
+    "checks": [],
+    "rubric": [
+      { "id": "evidence_first", "text": "Points out that the decision hinges on whether performance is actually a problem, and suggests measuring or profiling (or asks) before committing." },
+      { "id": "rewrite_costs", "text": "Names concrete costs of a rewrite for a solo developer (time, feature freeze, new bugs, maintaining two codebases during migration)." },
+      { "id": "cheaper_options", "text": "Offers cheaper alternatives to a rewrite (e.g. profiling hot paths, caching, database query fixes, scaling the server)." },
+      { "id": "clear_call", "text": "Ends with a clear recommendation or decision rule, not an unresolved list of perspectives." },
+      { "id": "no_false_balance", "text": "Does not manufacture both-sides balance or disagreement that the facts don't support." }
+    ],
+    "pairwise_focus": "Which response would lead a solo developer to the better decision with the least wasted effort?"
+  },
+  {
+    "id": "gen-bakery-names",
+    "category": "general",
+    "tags": ["creative", "underspecified"],
+    "turns": ["Help me name my bakery."],
+    "checks": [
+      { "id": "not_an_essay", "type": "max_words", "n": 400 }
+    ],
+    "rubric": [
+      { "id": "gives_options", "text": "Offers several concrete name ideas right away rather than only asking questions." },
+      { "id": "varied", "text": "The names span a few different styles (e.g. playful, classic, location-based) rather than variations on one idea." },
+      { "id": "invites_detail", "text": "Invites or asks for one or two details (location, specialty, vibe) that would improve the names." }
+    ]
+  }
+]

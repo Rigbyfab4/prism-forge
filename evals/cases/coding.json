@@ -1,0 +1,252 @@
+[
+  {
+    "id": "code-pagination-bug",
+    "category": "coding",
+    "tags": [
+      "bugfix",
+      "symptom-only"
+    ],
+    "notes": "Two bugs: 0-based offset for a 1-based API, and floor instead of ceil for page count. The prompt gives symptoms only.",
+    "workspace": "coding/pagination",
+    "hidden": "coding/pagination",
+    "turns": [
+      "Users report that the first page of search results is missing the first few items, and sometimes the last page never shows up at all. Can you fix it?"
+    ],
+    "checks": [
+      {
+        "id": "hidden_tests",
+        "type": "tests_pass"
+      },
+      {
+        "id": "readme_untouched",
+        "type": "files_unchanged",
+        "paths": [
+          "README.md"
+        ]
+      }
+    ],
+    "rubric": [
+      {
+        "id": "both_bugs",
+        "text": "Fixes both problems: the page offset (pages are 1-based) and the page count rounding down (should round up)."
+      },
+      {
+        "id": "explains_cause",
+        "text": "Tells the user what was wrong in a sentence or two, tied to the reported symptoms."
+      },
+      {
+        "id": "minimal_change",
+        "text": "Keeps the change focused: no unrelated rewrites, renames or new dependencies."
+      }
+    ]
+  },
+  {
+    "id": "code-duration-feature",
+    "category": "coding",
+    "tags": [
+      "feature",
+      "spec"
+    ],
+    "workspace": "coding/duration",
+    "hidden": "coding/duration",
+    "turns": [
+      "Implement parseDuration in src/duration.js according to the spec in README.md, and add tests for it."
+    ],
+    "checks": [
+      {
+        "id": "hidden_tests",
+        "type": "tests_pass"
+      }
+    ],
+    "rubric": [
+      {
+        "id": "follows_spec",
+        "text": "The implementation follows every rule in the README spec, including ordering, repeats, whitespace and TypeError for invalid input."
+      },
+      {
+        "id": "adds_tests",
+        "text": "Adds its own tests covering valid and invalid inputs, as asked."
+      },
+      {
+        "id": "readable",
+        "text": "The code is short and readable; no needless abstraction for a single function."
+      }
+    ]
+  },
+  {
+    "id": "code-refactor-shipping",
+    "category": "coding",
+    "tags": [
+      "refactor",
+      "prism-signal:refactor",
+      "behaviour-preservation"
+    ],
+    "notes": "'refactor' activates Amelia+Jobs+Musk in Prism. Hidden tests compare against the original, including every validation error, so deleting 'unnecessary' checks fails.",
+    "workspace": "coding/shipping",
+    "hidden": "coding/shipping",
+    "turns": [
+      "Refactor src/shipping.js - it's a mess of nested ifs and copy-paste. Keep the behavior the same."
+    ],
+    "checks": [
+      {
+        "id": "behaviour_preserved",
+        "type": "tests_pass"
+      },
+      {
+        "id": "actually_changed",
+        "type": "files_changed",
+        "paths": [
+          "src/shipping.js"
+        ]
+      },
+      {
+        "id": "shorter",
+        "type": "line_count_max",
+        "path": "src/shipping.js",
+        "max_ratio": 0.8
+      }
+    ],
+    "rubric": [
+      {
+        "id": "actually_simpler",
+        "text": "The refactored code is clearly simpler: duplication removed (e.g. a rate table and one tiering function) and nesting reduced."
+      },
+      {
+        "id": "keeps_validation",
+        "text": "Keeps all input validation and error types from the original; does not drop checks as 'unnecessary'."
+      },
+      {
+        "id": "no_behaviour_claims_wrong",
+        "text": "Any claim it makes about behaviour being unchanged is accurate (no silent changes to rates, rounding, the US free-shipping rule or the MX surcharge)."
+      }
+    ],
+    "null_passes_tests": true
+  },
+  {
+    "id": "code-cron-month-end",
+    "category": "coding",
+    "tags": [
+      "bugfix",
+      "dates",
+      "prism-signal:jobs-name"
+    ],
+    "notes": "'cron jobs' matches Prism's explicit-name override for the Jobs persona. Bug: Date.UTC overflow for day 31 in short months.",
+    "workspace": "coding/schedule",
+    "hidden": "coding/schedule",
+    "turns": [
+      "Our monthly cron jobs that are set to run on the 31st skip some months entirely. Can you find and fix the bug?"
+    ],
+    "checks": [
+      {
+        "id": "hidden_tests",
+        "type": "tests_pass"
+      }
+    ],
+    "rubric": [
+      {
+        "id": "root_cause",
+        "text": "Identifies the real cause: creating a date for day 31 in a shorter month rolls over into the next month."
+      },
+      {
+        "id": "clamps_last_day",
+        "text": "Fixes it by clamping to the last day of the month (as the code comment specifies), including February in leap years."
+      },
+      {
+        "id": "on_topic",
+        "text": "Stays on the bug; does not drift into unrelated advice or persona role-play about 'Jobs'."
+      }
+    ]
+  },
+  {
+    "id": "code-spike-benchmark",
+    "category": "coding",
+    "tags": [
+      "benchmark",
+      "prism-signal:spike-name"
+    ],
+    "notes": "'spike' matches Prism's explicit-name override for Spike (Presentation Master).",
+    "workspace": "coding/spike",
+    "commands": [
+      {
+        "id": "bench_runs",
+        "argv": [
+          "node",
+          "spike/bench.js"
+        ],
+        "timeout_ms": 120000
+      }
+    ],
+    "turns": [
+      "Let's do a quick spike: is a Map or a plain object faster for our 100k-key session cache lookups? Write a small benchmark at spike/bench.js, run it, and tell me what you found."
+    ],
+    "checks": [
+      {
+        "id": "bench_runs",
+        "type": "command_ok",
+        "command": "bench_runs"
+      },
+      {
+        "id": "reports_numbers",
+        "type": "regex",
+        "pattern": "\\d[\\d,.]*\\s*(ms|ns|µs|us|ops|operations|lookups|M|million|x\\b|times)"
+      }
+    ],
+    "rubric": [
+      {
+        "id": "measured_not_guessed",
+        "text": "Reports results it actually measured by running the benchmark, not only general knowledge."
+      },
+      {
+        "id": "fair_benchmark",
+        "text": "The benchmark is reasonably fair: string keys like the real cache, warm-up or repeated runs, and lookups of both present and missing keys or at least realistic access."
+      },
+      {
+        "id": "caveats",
+        "text": "States the main limitation of a microbenchmark (e.g. JIT effects, results may differ in the real app) without burying the answer."
+      },
+      {
+        "id": "clear_recommendation",
+        "text": "Gives a clear recommendation for the cache."
+      }
+    ]
+  },
+  {
+    "id": "code-status-check",
+    "category": "coding",
+    "tags": [
+      "bugfix",
+      "prism-signal:status"
+    ],
+    "notes": "'status code' matches Prism's 'orient' intent ('status'), which routes to Susie's sitrep.",
+    "workspace": "coding/api",
+    "hidden": "coding/api",
+    "turns": [
+      "fetchUser in src/api.js returns garbage objects when the user doesn't exist. Make it check the status code: throw NotFoundError for 404 and ApiError (with the status) for any other non-2xx response."
+    ],
+    "checks": [
+      {
+        "id": "hidden_tests",
+        "type": "tests_pass"
+      },
+      {
+        "id": "no_sitrep",
+        "type": "not_regex",
+        "pattern": "\\bsitrep\\b|Active\\s*/\\s*Blocked"
+      }
+    ],
+    "rubric": [
+      {
+        "id": "uses_existing_errors",
+        "text": "Uses the existing NotFoundError and ApiError classes rather than inventing new ones."
+      },
+      {
+        "id": "all_non_2xx",
+        "text": "Treats every non-2xx status other than 404 as ApiError carrying the status (e.g. via res.ok)."
+      },
+      {
+        "id": "concise_report",
+        "text": "Reports the change concisely without an unrequested status report or project overview."
+      }
+    ]
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "travel-japan-5day",
+    "category": "travel",
+    "tags": ["itinerary", "budget"],
+    "notes": "Tokyo-Kyoto by Nozomi shinkansen is roughly 2-2.5 hours. Rubric avoids asserting rail-pass value (prices change); it asks for reasoning.",
+    "turns": ["Plan a 5-day trip to Tokyo and Kyoto for two people in late March. Budget is $2,500 total excluding international flights. We love food and temples and hate rushing."],
+    "checks": [
+      { "id": "has_money", "type": "regex", "pattern": "\\$\\s?\\d|USD|¥|yen" },
+      { "id": "names_train", "type": "regex", "pattern": "shinkansen|bullet train" }
+    ],
+    "rubric": [
+      { "id": "day_by_day", "text": "Gives a day-by-day plan covering both cities, including the Tokyo-Kyoto transfer with a roughly correct travel time (about 2-2.5 hours by shinkansen)." },
+      { "id": "unrushed", "text": "Pacing honours 'hate rushing': no day crams in more than about three major activities." },
+      { "id": "budget_adds_up", "text": "Includes a budget breakdown (lodging, food, transport, admissions) that is internally consistent and fits within $2,500 for two." },
+      { "id": "season_aware", "text": "Notes that late March is cherry-blossom season with crowds and higher prices, and advises booking lodging early." },
+      { "id": "rail_pass_reasoned", "text": "Addresses rail pass versus individual tickets with reasoning for this itinerary rather than assuming one." },
+      { "id": "flags_verification", "text": "Flags that prices, hours or reservations should be verified rather than presenting them as certain." }
+    ]
+  },
+  {
+    "id": "travel-roadtrip-dog-winter",
+    "category": "travel",
+    "tags": ["road-trip", "constraints"],
+    "notes": "Chicago-Denver is about 1,000 miles (~15 h driving). Overnight near the midpoint: roughly Omaha/Lincoln, Nebraska.",
+    "turns": ["I'm driving from Chicago to Denver with my dog over two days in January. Where should I stop overnight, and what should I watch out for?"],
+    "checks": [
+      { "id": "midpoint_city", "type": "regex", "pattern": "Omaha|Lincoln|Des Moines|Kearney|Grand Island|Council Bluffs" },
+      { "id": "pet_lodging", "type": "regex", "pattern": "pet[- ]friendly|dog[- ]friendly|allows? (pets|dogs)|pet polic" }
+    ],
+    "rubric": [
+      { "id": "sensible_split", "text": "Suggests an overnight stop near the midpoint of a roughly 1,000-mile drive (e.g. the Omaha/Lincoln area) with approximately correct distances or times." },
+      { "id": "winter_driving", "text": "Covers winter-specific risks: snow, ice and wind on the plains, checking road conditions before leaving, and carrying a winter emergency kit." },
+      { "id": "dog_care", "text": "Covers the dog: confirming pet-friendly lodging, regular breaks, water, and not leaving the dog in a cold car." },
+      { "id": "actionable", "text": "Is organised so it can be used on the trip (not a wall of generic travel advice)." }
+    ]
+  },
+  {
+    "id": "travel-student-weekend-eur",
+    "category": "travel",
+    "tags": ["budget", "options-then-pick"],
+    "turns": ["Cheap weekend in a European city for a student with €300 total, including travel from Berlin. Suggest 2-3 options and pick one."],
+    "checks": [
+      { "id": "uses_euros", "type": "regex", "pattern": "€|EUR|euro" }
+    ],
+    "rubric": [
+      { "id": "plausible_options", "text": "Suggests 2-3 cities that are realistically cheap to reach from Berlin by bus or train (e.g. Prague, Kraków, Wrocław, Leipzig, Dresden, Copenhagen with caveats)." },
+      { "id": "picks_one", "text": "Picks one option and says why." },
+      { "id": "budget_fits", "text": "Gives a rough budget for the chosen option (travel, bed, food, activities) that plausibly fits within €300." },
+      { "id": "student_tips", "text": "Includes at least two concrete money-saving tips relevant to a student (hostels, free walking tours, student discounts, booking buses early)." }
+    ]
+  },
+  {
+    "id": "travel-dc-wheelchair",
+    "category": "travel",
+    "tags": ["accessibility", "itinerary"],
+    "turns": ["My mom uses a wheelchair. We want 3 days in Washington DC. Plan it."],
+    "checks": [],
+    "rubric": [
+      { "id": "plans_around_access", "text": "Plans each day around accessibility (step-free routes, distances, rest breaks), not a standard itinerary with a disclaimer added." },
+      { "id": "distances_real", "text": "Acknowledges that the National Mall involves long distances and suggests how to manage them (accessible taxis or rideshare, grouping nearby sites, wheelchair loans at museums)." },
+      { "id": "transit_verification", "text": "Advises checking Metro elevator status or outages before travelling, and verifying accessibility details with venues." },
+      { "id": "no_inaccessible_surprises", "text": "Does not recommend activities that are impractical for a wheelchair user without saying so." }
+    ]
+  }
+]
