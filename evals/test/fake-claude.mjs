@@ -25,6 +25,22 @@ const prismOn = () => {
 let modNotice = null;
 let n = 0;
 
+// Judge-style one-shot call: `claude -p --output-format json --json-schema ...`
+if (args.includes('--json-schema')) {
+  let input = '';
+  process.stdin.on('data', c => { input += c; });
+  process.stdin.on('end', () => {
+    const schema = JSON.parse(args[args.indexOf('--json-schema') + 1]);
+    let out;
+    if (schema.properties?.winner) out = { reasoning: 'fake judge', winner: 'tie' };
+    else {
+      const ids = [...input.matchAll(/^- ([\w-]+): /gm)].map(m => m[1]);
+      out = { criteria: ids.map((id, i) => ({ id, met: i % 2 === 0, reason: 'fake judge' })) };
+    }
+    const usage = { input_tokens: 900, output_tokens: 120, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
+    process.stdout.write(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, result: JSON.stringify(out), structured_output: out, usage, modelUsage: { [model]: {} } }) + '\n');
+  });
+} else {
 emit({ type: 'system', subtype: 'init', session_id: session, model, tools: ['Read', 'Edit'] });
 
 const rl = createInterface({ input: process.stdin });
@@ -51,3 +67,4 @@ rl.on('line', (line) => {
   emit({ type: 'result', subtype: 'success', is_error: false, session_id: session, result: reply, num_turns: 1, total_cost_usd: 0.01 * n, usage });
 });
 rl.on('close', () => process.exit(0));
+}

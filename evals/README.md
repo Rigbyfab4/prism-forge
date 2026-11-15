@@ -40,9 +40,11 @@ Windows is needed for the toggle arms and flow: the mod hard-codes Windows paths
 - Node 20.6+ (for `--env-file`), git, and the `claude` CLI on PATH (or `CLAUDE_BIN` pointing at `claude.exe` or `cli.js`)
 - `python` on PATH (Prism's hooks call `python`, not `python3`; the Microsoft Store alias doesn't count) and `bash` (Git Bash on Windows)
 - The toggle branch fetched: `git fetch origin feature/enable-disable`
-- **Credentials, in `evals/.env`** (gitignored; copy `.env.example`). Each run uses a fresh empty home that can't see your normal Claude login, and setting keys globally would also switch your everyday Claude Code to API billing, so the scripts read this file via `node --env-file=.env`:
-  - `ANTHROPIC_API_KEY`: **required by the judge**. If it's the only credential, the Claude Code runs bill to it too.
-  - `CLAUDE_CODE_OAUTH_TOKEN` (optional; create it with `claude setup-token` in a normal terminal): the Claude Code runs bill to your subscription instead, and the API key is withheld from them. Subscriptions have usage limits, so use `--concurrency 2` if you go this way.
+- **Credentials, in `evals/.env`** (gitignored; copy `.env.example`). Each run uses a fresh empty home that can't see your normal Claude login, so the scripts read this file via `node --env-file=.env`:
+  - **Subscription only (no API key):** set `CLAUDE_CODE_OAUTH_TOKEN`, created with `claude setup-token` in a normal terminal. The Claude Code runs *and* the judge go through Claude Code on your plan. The judge runs as `claude -p --json-schema` with no tools, in an empty temp home.
+  - With API access instead: `ANTHROPIC_API_KEY`. If both are set, runs use the subscription and the judge uses the API.
+
+**On a subscription, usage limits are the real budget, not dollars.** The full run is about 330 Claude Code sessions plus about 830 judge calls on the judge model (Opus by default). Use `--concurrency 2`. If you hit your plan's limit, attempts fail with `usage_limit` in `errors.jsonl`. Re-run the same command after the limit resets and it picks up where it stopped. The `$` figures in `summary.md` are what the same tokens would cost at API list prices, a size comparison between arms, not a charge.
 
 ## Running it
 
@@ -59,15 +61,16 @@ npm install
 Copy-Item .env.example .env    # then open .env and fill it in
 node test/selftest.mjs                       # case files, hidden tests vs reference solutions, blinding
 node --env-file=.env preflight.mjs           # builds every arm and checks it is what it claims
+node --env-file=.env preflight.mjs --live    # + one tiny session and one judge call on your credentials
 ```
 
-Preflight should end "Preflight clean." It prints, per arm, whether the CLAUDE.md block is there, what each hook prints for a sample prompt, how many bytes of markdown sit in `~/.claude/rules` (auto-loaded) and, for the toggle arms, `prism-forge status` and `claude plugin validate` on the mod. **Stop here if it reports problems.** The usual ones are `python` resolving to the Microsoft Store alias, `bash` not on PATH (install Git for Windows), or an empty `.env`.
+Preflight should end "Preflight clean." It prints, per arm, whether the CLAUDE.md block is there, what each hook prints for a sample prompt, how many bytes of markdown sit in `~/.claude/rules` (auto-loaded) and, for the toggle arms, `prism-forge status` and `claude plugin validate` on the mod. `--live` uses a sliver of your plan to prove the login works, the streaming format parses, and the judge prefers a right answer over a wrong one in both orders. **Stop here if it reports problems.** The usual ones are `python` resolving to the Microsoft Store alias, `bash` not on PATH (install Git for Windows), or an empty `.env`.
 
 **Approve the harness.** The runner refuses to start until you record a hash of the harness files (runner, `lib/`, cases). Review them, then pass `--approve-harness` once on your first run. That approval is yours to give. Any later change to those files makes the runner stop and ask again.
 
 ### 1. Pilot: 6 cases on every arm, plus one toggle pass
 
-This checks the wiring on real Claude Code before you spend on the full run. It's about 30 sessions plus judging.
+This checks the wiring on real Claude Code before you spend on the full run. It's about 30 sessions plus about 80 judge calls. On a subscription, add `--concurrency 2` to each command.
 
 ```powershell
 $env:EVAL_ONLY = "gen-percent,code-cron-month-end,tutor-bayes-base-rate,travel-japan-5day,print-pla-hot-car,brain-war-room-mobile-web"
@@ -90,7 +93,7 @@ Then check, in this order:
 3. **Start context.** Compare v1 and v3 with baseline. A v1 overhead in the tens of thousands of tokens means Claude Code loads the `~/.claude/rules` persona files.
 4. **Toggle flow.** `toggle_not_applied` errors mean `/prism` doesn't reach the mod through headless `claude -p`. That's a finding, not a harness bug.
 5. **The judge.** Read a few rows' `explanation` in `flow/v1/results.jsonl` beside their traces. **Would you have graded any of them differently?** If so, fix the rubric in `cases/*.json` before the full run. Editing cases changes the harness hash, so you'll approve again.
-6. **Cost.** `summary.md` reports measured spend. Full run ≈ (pilot spend ÷ pilot sessions) × 32 cases × 2 reps × 5 arms, plus the toggle flow.
+6. **Cost / usage.** `summary.md` reports token use and API-equivalent `$` per session. Full run ≈ pilot per-session figures × 32 cases × 2 reps × 5 arms, plus the toggle flow. On a subscription, compare that with how much of your plan's limit the pilot used. If the full run looks like too much, cut reps to 1, drop an arm (v2 if v1 vs v3 already settles the hook question), or set `"judge_model": "claude-sonnet-5-5"` in `flow/_state.json`. A Sonnet judge is cheaper and, since every arm uses the same model, any self-preference shifts all arms equally.
 
 ### 2. Full run
 
@@ -98,7 +101,7 @@ Baseline first, because the other variants are judged against its frozen outputs
 
 ```powershell
 foreach ($v in "baseline","v1","v2","v3","v4") {
-  node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 2
+  node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 2 --concurrency 2
 }
 node --env-file=.env run-eval.mjs --flow flow-toggle --variant baseline --model claude-sonnet-5-5 --reps 3
 node summarize.mjs --flow flow
@@ -112,11 +115,11 @@ Reading the toggle flow: `on_before` failing means Prism wasn't producing person
 
 ## Running it with Claude Code on your PC
 
-Do step 0's `git` commands and fill in `.env` yourself, so your keys never go into a chat. Then open the repo folder in Claude Code (Claude Desktop's Code tab, or `claude` in a terminal) and paste:
+Do step 0's `git` commands, run `claude setup-token` in a normal terminal, and paste the token into `.env` yourself, so it never goes into a chat. Then open the repo folder in Claude Code (Claude Desktop's Code tab, or `claude` in a terminal) and paste:
 
-> Read evals/README.md. Then, from evals/: run `npm install`, `node test/selftest.mjs` and `node --env-file=.env preflight.mjs`. If preflight reports problems in my environment (python, bash, claude, .env), explain each and how to fix it. Don't change anything under evals/ to work around them. Stop and show me the preflight output.
+> Read evals/README.md. Then, from evals/: run `npm install`, `node test/selftest.mjs` and `node --env-file=.env preflight.mjs --live`. If preflight reports problems in my environment (python, bash, claude, .env), explain each and how to fix it. Don't change anything under evals/ to work around them. Stop and show me the preflight output.
 >
-> When I say go: run the pilot from section 1 exactly as written. Its first command includes --approve-harness, which records my approval of the harness: show me that command and wait for my OK before running it. Run the pilot in the background and tell me when it finishes. Then walk me through checks 1–6 of section 1, showing me two graded examples with their transcripts and the measured cost. Don't start the full run until I approve it.
+> When I say go: run the pilot from section 1 exactly as written, with --concurrency 2 on each run-eval command. Its first command includes --approve-harness, which records my approval of the harness: show me that command and wait for my OK before running it. Run the pilot in the background and tell me when it finishes. Then walk me through checks 1–6 of section 1, showing me two graded examples with their transcripts and the measured cost. Don't start the full run until I approve it.
 
 Claude Code will ask permission before running these commands. The eval's child sessions are separate `claude -p` processes, each in its own temp folder.
 

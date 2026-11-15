@@ -140,7 +140,7 @@ for (const v of variants) {
 }
 p();
 const totals = variants.map(v => Object.values(rows[v]).flat().reduce((s, r) => s + (r.cost_usd || 0) + ((r.judge_usage && r.judge_model !== 'mock') ? (costUsd(r.judge_model, r.judge_usage) || 0) : 0), 0));
-p(`Measured spend for this flow (runs + judge, scored rows only): ${money(totals.reduce((a, b) => a + b, 0))}.`);
+p(`Token use for this flow at API list prices (runs + judge, scored rows only): ${money(totals.reduce((a, b) => a + b, 0))}. On a Claude subscription this is a size comparison, not a charge; your plan's usage limits are the budget.`);
 p();
 
 // --- manipulation checks ------------------------------------------------------

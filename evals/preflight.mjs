@@ -19,12 +19,14 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getArm, homeEnv, prismStatus } from './lib/arms.mjs';
-import { resolveClaude } from './lib/claude.mjs';
+import { digest, resolveClaude, runSession } from './lib/claude.mjs';
+import { JUDGE_BACKEND, judgePair } from './lib/judge.mjs';
 import { describeRef, EVAL_ROOT } from './lib/source.mjs';
 
 const args = process.argv.slice(2);
 const flow = args.includes('--flow') ? args[args.indexOf('--flow') + 1] : 'flow';
 const keep = args.includes('--keep');
+const live = args.includes('--live');
 const st = JSON.parse(readFileSync(join(EVAL_ROOT, flow, '_state.json'), 'utf8'));
 const WIN = process.platform === 'win32';
 let problems = 0;
@@ -48,11 +50,10 @@ try {
   console.log(`  claude: ${probe(c.cmd, [...c.pre, '--version']) ?? 'found but --version failed'} (${[c.cmd, ...c.pre].join(' ')})`);
 } catch (e) { warn(e.message); }
 const auth = ['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN'].filter(k => process.env[k]);
-console.log(`  credentials for Claude Code runs: ${auth.join(', ') || 'NONE'}`);
-if (!auth.length) warn('Each run uses a fresh empty home, so your normal Claude login is not visible to it. Set ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`).');
-if (st.judge !== false && !process.env.ANTHROPIC_API_KEY && process.env.EVAL_JUDGE !== 'mock') {
-  warn('The judge calls the API directly and needs ANTHROPIC_API_KEY (or an `ant auth login` profile).');
-}
+console.log(`  credentials: ${auth.join(', ') || 'NONE'}`);
+if (!auth.length) warn('No credentials. Each run uses a fresh empty home that cannot see your normal Claude login: put CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`) or ANTHROPIC_API_KEY in evals/.env and run with `node --env-file=.env`.');
+else console.log(`  Claude Code runs bill to: ${process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'your subscription (CLAUDE_CODE_OAUTH_TOKEN)' : 'the API key'}`);
+if (st.judge !== false) console.log(`  judge backend: ${JUDGE_BACKEND}${JUDGE_BACKEND === 'claude' ? ' (claude -p with --json-schema, on the same credentials as the runs)' : JUDGE_BACKEND === 'api' ? ' (Anthropic API, ANTHROPIC_API_KEY)' : ''}`);
 if (!WIN && Object.values(st.arms).some(a => a.startsWith('prism-toggle'))) {
   warn('The prism-toggle mod is written for Windows (backslash paths, node.exe); on this OS its /prism command cannot reach the CLI. Toggle results only mean something on Windows.');
 }
@@ -146,6 +147,34 @@ for (const [variant, armId] of Object.entries(st.arms)) {
   } finally {
     if (!keep) rmSync(home, { recursive: true, force: true, maxRetries: 3 });
     else console.log(`  (kept ${home})`);
+  }
+}
+
+// --live: one tiny real session and one judge call, to prove credentials and
+// output formats work before the pilot. Uses a little of your usage.
+if (live && !problems) {
+  console.log('\n# Live check (two small model calls)');
+  const model = args.includes('--model') ? args[args.indexOf('--model') + 1] : 'claude-sonnet-5-5';
+  const home = mkdtempSync(join(tmpdir(), 'pfe-live-'));
+  try {
+    const turns = [{ text: 'Reply with exactly the word OK.' }];
+    const s = await runSession({ home, cwd: home, model, args: ['--strict-mcp-config', '--tools', ''], turns, timeoutMs: 180_000 });
+    const r = s.turnResults[0];
+    const d = digest(s.events, turns);
+    if (!r) warn(`session produced no result (exit ${s.exitCode}): ${s.stderr.slice(-500)}`);
+    else if (r.is_error || r.subtype !== 'success') warn(`session error: ${r.subtype} ${String(r.result).slice(0, 300)}`);
+    else console.log(`  session: ok; model ${d.model}; reply "${d.perTurn[0].text.slice(0, 40)}"; first request ${d.firstCtx} input tokens`);
+    if (r && d.model && !String(d.model).startsWith(model)) warn(`served model ${d.model} differs from requested ${model}`);
+  } catch (e) { warn(`session failed: ${e.message}`); }
+  finally { rmSync(home, { recursive: true, force: true }); }
+  if (st.judge !== false) {
+    try {
+      const usage = {};
+      const c = { id: 'live', pairwise_focus: '' };
+      const j = await judgePair({ model: st.judge_model || 'claude-opus-5-5', c, conversation: '[User, turn 1]\nWhat is 2 + 2?', candidate: '[Assistant, turn 1]\n4', reference: '[Assistant, turn 1]\n5', usage });
+      console.log(`  judge (${JUDGE_BACKEND}): ok; preferred the correct answer: ${j.win === 1 ? 'yes' : `no (win=${j.win})`}; ${usage.input_tokens ?? '?'} input tokens`);
+      if (j.win !== 1) warn('the judge did not prefer "4" over "5" in both orders; check the judge model before trusting grades');
+    } catch (e) { warn(`judge call failed (${e.failure_class ?? 'error'}): ${e.message}`); }
   }
 }
 

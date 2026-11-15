@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { getArm, prismCli, prismStatus } from './arms.mjs';
 import { digest, readIfExists, runSession, toTranscript } from './claude.mjs';
 import { blind, countPersonaTags, hasSitrep, runChecks, words } from './checks.mjs';
-import { judgePair, judgeRubric, renderConversation, renderResponse } from './judge.mjs';
+import { judgePair, judgeRubric, renderConversation, renderResponse, USAGE_LIMIT } from './judge.mjs';
 import { costUsd } from './prices.mjs';
 import { EVAL_ROOT } from './source.mjs';
 
@@ -169,10 +169,13 @@ export async function runCase(c, ctx) {
       if (t.control === 'cli') continue;
       const r = sess.turnResults[i];
       if (!r) {
-        throw Object.assign(new Error(`turn ${i + 1} got no result (exit ${sess.exitCode}): ${sess.stderr.slice(-800)}`), { failure_class: 'claude_error' });
+        throw Object.assign(new Error(`turn ${i + 1} got no result (exit ${sess.exitCode}): ${sess.stderr.slice(-800)}`), { failure_class: USAGE_LIMIT.test(sess.stderr) ? 'usage_limit' : 'claude_error' });
       }
       if (r.is_error || (r.subtype && r.subtype !== 'success')) {
-        throw Object.assign(new Error(`turn ${i + 1}: ${r.subtype} ${String(r.result ?? '').slice(0, 300)}`), { failure_class: 'claude_error' });
+        const text = String(r.result ?? '').slice(0, 300);
+        // A subscription usage limit resets in hours: classify it so the run
+        // can simply be resumed later (failed attempts are retried on rerun)
+        throw Object.assign(new Error(`turn ${i + 1}: ${r.subtype} ${text}`), { failure_class: USAGE_LIMIT.test(text) ? 'usage_limit' : 'claude_error' });
       }
     }
 
@@ -262,7 +265,7 @@ export async function gradeCase(c, run, ref, ctx) {
       grade.win = pair.win;
       explanation.win = `win ${pair.win} (orders ${pair.consistent ? 'agree' : 'disagree'})\n[candidate as A] ${pair.orders[0]}\n[candidate as B] ${pair.orders[1]}`;
     }
-    return { grade, explanation, judge_model: rub.model === 'mock' ? 'mock' : model, judge_usage: usage };
+    return { grade, explanation, judge_model: rub.model === 'mock' ? 'mock' : rub.model, judge_usage: usage };
   } catch (e) {
     e.judge_model = model;
     e.judge_usage = usage;
