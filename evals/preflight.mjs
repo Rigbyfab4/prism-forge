@@ -22,6 +22,7 @@ import { getArm, homeEnv, prismStatus } from './lib/arms.mjs';
 import { digest, resolveClaude, runSession } from './lib/claude.mjs';
 import { JUDGE_BACKEND, judgePair } from './lib/judge.mjs';
 import { describeRef, EVAL_ROOT } from './lib/source.mjs';
+import { inheritedMemory, makeTemp, managedMemory, tmpRoot } from './lib/tmp.mjs';
 
 const args = process.argv.slice(2);
 const flow = args.includes('--flow') ? args[args.indexOf('--flow') + 1] : 'flow';
@@ -58,6 +59,20 @@ if (!WIN && Object.values(st.arms).some(a => a.startsWith('prism-toggle'))) {
   warn('The prism-toggle mod is written for Windows (backslash paths, node.exe); on this OS its /prism command cannot reach the CLI. Toggle results only mean something on Windows.');
 }
 
+// Claude Code loads CLAUDE.md from the working folder and every parent: the
+// eval's temp root must have none above it, or every arm inherits it
+const root = tmpRoot();
+const inherited = inheritedMemory(root);
+console.log(`  temp root: ${root}${process.env.EVAL_TMP ? ' (EVAL_TMP)' : ''}`);
+if (inherited.length) {
+  warn(`CLAUDE.md files above the temp root would load into every session and the judge: ${inherited.join(', ')}. Set EVAL_TMP in .env to a folder outside your home folder.`);
+  console.log('\nStopping here: nothing else can be checked meaningfully until this is fixed.');
+  process.exit(1);
+}
+else console.log('  no CLAUDE.md in the temp root or its parents');
+const managed = managedMemory();
+if (managed.length) console.log(`  note: organization-managed memory applies to every session (all arms equally): ${managed.join(', ')}`);
+
 console.log('\n# Sources');
 for (const [k, ref] of Object.entries(st.refs || {})) {
   try { const d = describeRef(ref); console.log(`  ${k}: ${ref} @ ${d.sha.slice(0, 10)} "${d.subject}"`); }
@@ -89,7 +104,7 @@ function runHook(command, home, event) {
 for (const [variant, armId] of Object.entries(st.arms)) {
   const arm = getArm(armId);
   console.log(`\n# ${variant} = ${armId}: ${arm.label}`);
-  const home = mkdtempSync(join(tmpdir(), 'pfe-pre-'));
+  const home = makeTemp('pfe-pre-');
   try {
     let setup;
     try { setup = arm.setup(home, { refs: st.refs }); }
@@ -155,7 +170,7 @@ for (const [variant, armId] of Object.entries(st.arms)) {
 if (live && !problems) {
   console.log('\n# Live check (two small model calls)');
   const model = args.includes('--model') ? args[args.indexOf('--model') + 1] : 'claude-sonnet-5-5';
-  const home = mkdtempSync(join(tmpdir(), 'pfe-live-'));
+  const home = makeTemp('pfe-live-');
   try {
     const turns = [{ text: 'Reply with exactly the word OK.' }];
     const s = await runSession({ home, cwd: home, model, args: ['--strict-mcp-config', '--tools', ''], turns, timeoutMs: 180_000 });

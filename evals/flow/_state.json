@@ -5,7 +5,7 @@
   "arms": {
     "baseline": "none",
     "v1": "prism-main",
-    "v2": "prism-main-hookfix",
+    "v2": "prism-toggle-hookfix",
     "v3": "prism-toggle-on",
     "v4": "prism-toggle-off"
   },

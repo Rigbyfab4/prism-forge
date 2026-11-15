@@ -10,11 +10,14 @@ Each case runs in a **fresh, empty home folder** (`HOME`/`USERPROFILE` point at 
 |---|---|---|
 | `baseline` | `none` | Plain Claude Code. No Prism. |
 | `v1` | `prism-main` | Prism from `main`, installed with `prism-forge install` as shipped. |
-| `v2` | `prism-main-hookfix` | Same as v1, plus one fix: the UserPromptSubmit hook emits `hookSpecificOutput.additionalContext` (the documented shape) instead of a top-level `additionalContext`. v1 vs v2 shows whether the per-message routing directive reaches the model at all. |
+| `v2` | `prism-toggle-hookfix` | The toggle branch (as v3) with the routing hook fixed: it emits `hookSpecificOutput.additionalContext`. Prism's own hook prints a top-level `additionalContext`, which Claude Code ignores; its debug log says so on every prompt. So v3 vs v2 shows what the per-message routing directive adds once it actually arrives. (`prism-main-hookfix`, the same fix on `main`, remains available as an arm.) |
 | `v3` | `prism-toggle-on` | Prism from `origin/feature/enable-disable` (installs to `~/.claude/prism`, adds `disable`/`enable`/`status`), with the **prism-toggle mod** loaded via `--plugin-dir`. Enabled. |
 | `v4` | `prism-toggle-off` | Same as v3, then `prism-forge disable`. If "off" really means off, v4 should be indistinguishable from baseline. It also serves as an A/A control: it faces the same frozen baseline outputs as the Prism arms, so `summary.md` reports each arm's difference from v4 too. |
 
-Optional arm, not mapped by default: `prism-toggle-hookfix` (v3 plus the v2 hook fix). To use it instead of v2, set `"v2": "prism-toggle-hookfix"` under `arms` in `flow/_state.json`. On the toggle branch the persona files aren't auto-loaded, so the per-message routing directive matters more there.
+Two things every arm gets, so the comparison is fair:
+
+- **Temp folders outside your home folder** (`C:\pfe-tmp` on Windows; `EVAL_TMP` overrides). Claude Code loads CLAUDE.md from the working folder *and every parent*. The Windows temp folder sits under `C:\Users\<you>`, so sessions there loaded your real `~/.claude/CLAUDE.md`, and so did the judge. Preflight now refuses to run if the temp root has a CLAUDE.md above it.
+- **Read access to the arm's own `~/.claude`** (`--add-dir`). Headless sessions otherwise deny reads outside the working folder, so Prism couldn't read its own routing engine and persona files. In normal use you'd approve those reads.
 
 The mapping lives in `flow/_state.json` (`arms`, `refs`). `refs` name git refs in your clone: they point at the `fork` remote (`Rigbyfab4/prism-forge`), which is where the toggle branch lives. Change them to test other commits or remotes. Preflight prints the exact commit each arm uses.
 
@@ -98,14 +101,24 @@ Then check, in this order:
 
 ### 2. Full run
 
+**If you ran a pilot before the CLAUDE.md fix (commit "keep every session clear of your real CLAUDE.md"), delete its results first.** Those runs loaded your real `~/.claude/CLAUDE.md` into every arm and the judge, so they aren't comparable. From `evals`:
+
+```powershell
+Remove-Item -Recurse -Force flow\baseline, flow\v1, flow\v2, flow\v3, flow\v4, flow-toggle\baseline, flow-toggle\v1 -ErrorAction SilentlyContinue
+```
+
+On a subscription, start with `--reps 1` (about 160 sessions and 420 judge calls for the main flow). Look at the summary, and add a second rep later only if a difference you care about is close: rerunning with `--reps 2` adds only the missing rep.
+
+### 2a. Commands
+
 Baseline first, because the other variants are judged against its frozen outputs in `flow/baseline/ref/` (a variant run before baseline refuses to start). Pilot rows are reused: resume skips (case, rep) pairs already done.
 
 ```powershell
 foreach ($v in "baseline","v1","v2","v3","v4") {
-  node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 2 --concurrency 2
+  node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 1 --concurrency 2
 }
-node --env-file=.env run-eval.mjs --flow flow-toggle --variant baseline --model claude-sonnet-5-5 --reps 3
-node --env-file=.env run-eval.mjs --flow flow-toggle --variant v1 --model claude-sonnet-5-5 --reps 3
+node --env-file=.env run-eval.mjs --flow flow-toggle --variant baseline --model claude-sonnet-5-5 --reps 2
+node --env-file=.env run-eval.mjs --flow flow-toggle --variant v1 --model claude-sonnet-5-5 --reps 2
 node summarize.mjs --flow flow
 node summarize.mjs --flow flow-toggle
 node build-report-lite.mjs flow

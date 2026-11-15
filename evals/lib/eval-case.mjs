@@ -11,6 +11,7 @@ import { blind, countPersonaTags, hasSitrep, runChecks, words } from './checks.m
 import { judgePair, judgeRubric, renderConversation, renderResponse, USAGE_LIMIT } from './judge.mjs';
 import { costUsd } from './prices.mjs';
 import { EVAL_ROOT } from './source.mjs';
+import { assertTempRootClean, makeTemp } from './tmp.mjs';
 
 const KEEP = process.env.EVAL_KEEP === '1';
 const DIFF_FOR_JUDGE = 15_000;
@@ -29,6 +30,7 @@ export async function loadCases(ctx) {
   if (!st.arms?.[ctx.variant]) throw new Error(`_state.json "arms" has no entry for variant '${ctx.variant}'`);
   getArm(st.arms[ctx.variant]); // fail before spending if the arm id is wrong
   if (!ctx.model) throw new Error('pass --model (the model Claude Code runs under test)');
+  assertTempRootClean();
   const dir = join(EVAL_ROOT, st.cases_dir);
   const cases = [];
   for (const f of readdirSync(dir).filter(f => f.endsWith('.json')).sort()) {
@@ -120,8 +122,8 @@ export async function runCase(c, ctx) {
   if (c.arms && !c.arms.includes(armId)) {
     throw Object.assign(new Error(`case ${c.id} is not meant for arm ${armId}`), { failure_class: 'harness' });
   }
-  const home = mkdtempSync(join(tmpdir(), 'pfe-home-'));
-  const ws = mkdtempSync(join(tmpdir(), 'pfe-ws-'));
+  const home = makeTemp('pfe-home-');
+  const ws = makeTemp('pfe-ws-');
   try {
     const setup = arm.setup(home, { refs: ctx.state.refs });
     if (c.workspace) {
@@ -131,7 +133,10 @@ export async function runCase(c, ctx) {
 
     // Web tools are off unless the case asks for them ("web": true), and a
     // case's setting is the same in every arm, so arms stay comparable
-    const args = ['--strict-mcp-config'];
+    // Each arm may read its own ~/.claude (Prism's persona and routing files
+    // live there). Headless sessions otherwise deny reads outside the working
+    // folder, which in interactive use the person would simply approve.
+    const args = ['--strict-mcp-config', '--add-dir', join(home, '.claude')];
     const allowed = [...(c.workspace ? CODING_ALLOWED : []), ...(c.web ? ['WebSearch', 'WebFetch'] : [])];
     if (!c.web) args.push('--disallowedTools', 'WebSearch', 'WebFetch');
     if (c.workspace) args.push('--permission-mode', 'acceptEdits');

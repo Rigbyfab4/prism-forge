@@ -13,6 +13,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { blind, countPersonaTags, listItems } from '../lib/checks.mjs';
 import { EVAL_ROOT } from '../lib/source.mjs';
+import { inheritedMemory } from '../lib/tmp.mjs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 let failures = 0;
 const ok = (cond, msg) => { console.log(`${cond ? 'ok  ' : 'FAIL'} ${msg}`); if (!cond) failures++; };
@@ -83,6 +85,18 @@ const b = blind(sample);
 ok(!/Quinn|Mary|Susie|Winston|Architect/.test(b) && b.includes('clock skew') && b.includes('expiry config'), 'blind() strips labels and roster, keeps content');
 ok(countPersonaTags('Use **bold (not a persona)** text and **Note:** here.') === 0, 'no false positive on ordinary bold text');
 ok(listItems('- a\n- b\n* c\n1. d\n2) e\nnot a list') === 5, 'counts list items');
+
+// --- inherited memory guard ---------------------------------------------------
+{
+  const top = mkdtempSync(join(tmpdir(), 'pfe-mem-'));
+  try {
+    const deep = join(top, 'a', 'b');
+    mkdirSync(join(top, '.claude'), { recursive: true });
+    mkdirSync(deep, { recursive: true });
+    writeFileSync(join(top, '.claude', 'CLAUDE.md'), 'x');
+    ok(inheritedMemory(deep).includes(join(top, '.claude', 'CLAUDE.md')), 'inheritedMemory finds a parent .claude/CLAUDE.md');
+  } finally { rmSync(top, { recursive: true, force: true }); }
+}
 
 console.log(failures ? `\n${failures} FAILED` : '\nall selftests passed');
 process.exit(failures ? 1 : 0);

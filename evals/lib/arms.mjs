@@ -34,9 +34,11 @@ function readJson(p, fallback) {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return fallback; }
 }
 
-// Prism main writes {"additionalContext": ...} at the top level of its
-// UserPromptSubmit output. Claude Code documents that field under
-// hookSpecificOutput, so this arm rewrites emit() to the documented shape.
+// Prism writes {"additionalContext": ...} at the top level of its
+// UserPromptSubmit output. Claude Code ignores it; its debug log says so on
+// every prompt ("Hook JSON output had unrecognized keys (ignored):
+// additionalContext. Did you mean hookSpecificOutput.additionalContext?").
+// The hookfix arms rewrite emit() to the documented shape.
 const HOOK_FIX_FROM = 'sys.stdout.write(json.dumps({"additionalContext": directive}))';
 const HOOK_FIX_TO =
   'sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": directive}}))';
