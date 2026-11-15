@@ -66,9 +66,10 @@ rl.on('line', (line) => {
     reply = `${tag}Here is a fake answer to: ${text.slice(0, 60)}. 17% of 2,340 is 397.8.`;
     modNotice = null;
   }
+  const council = existsSync(join(home, '.claude', 'agents')) && /should|plan|brainstorm|war room|which/i.test(text);
   const id = `msg_${n}`;
   const usage = { input_tokens: 10, cache_creation_input_tokens: prismOn() ? 40000 : 12000, cache_read_input_tokens: 0, output_tokens: 50 };
-  emit({ type: 'assistant', session_id: session, parent_tool_use_id: null, message: { id, model, role: 'assistant', content: [{ type: 'text', text: reply }], usage } });
+  emit({ type: 'assistant', session_id: session, parent_tool_use_id: null, message: { id, model, role: 'assistant', content: [...(council ? ['advocate', 'critic', 'premortem'].map((a, i) => ({ type: 'tool_use', id: `tu_${n}_${i}`, name: 'Agent', input: { subagent_type: a } })) : []), { type: 'text', text: reply }], usage } });
   emit({ type: 'result', subtype: 'success', is_error: false, session_id: session, result: reply, num_turns: 1, total_cost_usd: 0.01 * n, usage });
 });
 rl.on('close', () => process.exit(0));

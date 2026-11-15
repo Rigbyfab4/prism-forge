@@ -140,7 +140,9 @@ for (const [variant, armId] of Object.entries(st.arms)) {
     }
 
     // What each arm should look like
-    const expectOn = armId !== 'none' && armId !== 'prism-toggle-off';
+    const expectOn = armId.startsWith('prism-') && armId !== 'prism-toggle-off';
+    const agentsDir = join(home, '.claude', 'agents');
+    if (existsSync(agentsDir)) console.log(`  subagents: ${readdirSync(agentsDir).join(', ')}`);
     if (expectOn && !block) warn('expected the PRISM block in CLAUDE.md');
     if (!expectOn && block) warn('expected no PRISM block in CLAUDE.md');
 

@@ -138,15 +138,15 @@ p('## Cost, context and behaviour');
 p();
 p('Absolute numbers per session (median over all reps). "Start context" is the input size of the first model request: system prompt, CLAUDE.md, auto-loaded rules and hook context. It is where Prism\'s context overhead shows up. Prefer "Claude Code reported cost" over "cost (approx.)", which is rebuilt from streamed usage and list prices.');
 p();
-p('| variant | cost (approx.) | Claude Code reported cost | judge cost | start context (tok) | out tok | latency s | words | tool calls | turns with persona tags | first turn sitrep |');
-p('|---|---|---|---|---|---|---|---|---|---|---|');
+p('| variant | cost (approx.) | Claude Code reported cost | judge cost | start context (tok) | out tok | latency s | words | tool calls | subagent calls | turns with persona tags | first turn sitrep |');
+p('|---|---|---|---|---|---|---|---|---|---|---|---|');
 const perfOf = {};
 for (const v of variants) {
   const all = Object.values(rows[v]).flat();
   const col = (k) => all.map(r => r[k]).filter(x => typeof x === 'number');
   const judgeCost = all.map(r => (r.judge_usage && r.judge_model && r.judge_model !== 'mock') ? costUsd(r.judge_model, r.judge_usage) : null).filter(x => x != null);
   perfOf[v] = { ctx: median(col('first_ctx_tokens')), tagged: mean(col('tagged_turns')), sitrep: mean(col('sitrep')) };
-  p(`| ${v} | ${money(median(col('cost_usd')))} | ${money(median(col('cc_cost_usd')))} | ${money(median(judgeCost))} | ${int(perfOf[v].ctx)} | ${int(median(col('out_tokens')))} | ${f2(median(col('latency_s')))} | ${int(median(col('words')))} | ${f2(mean(col('tool_calls')))} | ${pct(perfOf[v].tagged)} | ${pct(perfOf[v].sitrep)} |`);
+  p(`| ${v} | ${money(median(col('cost_usd')))} | ${money(median(col('cc_cost_usd')))} | ${money(median(judgeCost))} | ${int(perfOf[v].ctx)} | ${int(median(col('out_tokens')))} | ${f2(median(col('latency_s')))} | ${int(median(col('words')))} | ${f2(mean(col('tool_calls')))} | ${f2(mean(col('subagent_calls')))} | ${pct(perfOf[v].tagged)} | ${pct(perfOf[v].sitrep)} |`);
 }
 p();
 const totals = variants.map(v => Object.values(rows[v]).flat().reduce((s, r) => s + (r.cost_usd || 0) + ((r.judge_usage && r.judge_model !== 'mock') ? (costUsd(r.judge_model, r.judge_usage) || 0) : 0), 0));
@@ -160,7 +160,16 @@ const notes = [];
 for (const v of variants) {
   const armId = st.arms[v];
   const { ctx, tagged } = perfOf[v];
-  const shouldBeOn = armId !== 'none' && armId !== 'prism-toggle-off';
+  const shouldBeOn = armId.startsWith('prism-') && armId !== 'prism-toggle-off';
+  if (armId === 'council') {
+    const byCat = {};
+    for (const reps of Object.values(rows[v])) for (const r of reps) {
+      const k = r.tags?.[0] ?? 'other';
+      (byCat[k] ??= []).push((r.subagent_calls || 0) > 0 ? 1 : 0);
+    }
+    const all = Object.values(byCat).flat();
+    notes.push(`- **${v} (council)**: consulted subagents in ${pct(mean(all))} of sessions (${Object.entries(byCat).sort().map(([k, xs]) => `${k} ${pct(mean(xs))}`).join(', ')}). "cost (approx.)" leaves out subagent tokens; use Claude Code's reported cost for this arm.`);
+  }
   if (shouldBeOn && st.cases_dir === 'cases' && tagged < 0.2) notes.push(`- **${v} (${armId})**: persona tags on only ${pct(tagged)} of turns. Prism's instructions may not be reaching the model; any "no difference" result for this arm says little about Prism itself. Check the debug-log excerpt at the end of a trace.`);
   if (!shouldBeOn && tagged > 0.05) notes.push(`- **${v} (${armId})**: persona tags on ${pct(tagged)} of turns although Prism should be off here.`);
   if (v !== base && Number.isFinite(ctx) && Number.isFinite(perfOf[base].ctx)) {

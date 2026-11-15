@@ -137,7 +137,7 @@ export async function runCase(c, ctx) {
     // live there). Headless sessions otherwise deny reads outside the working
     // folder, which in interactive use the person would simply approve.
     const args = ['--strict-mcp-config', '--add-dir', join(home, '.claude')];
-    const allowed = [...(c.workspace ? CODING_ALLOWED : []), ...(c.web ? ['WebSearch', 'WebFetch'] : [])];
+    const allowed = [...(c.workspace ? CODING_ALLOWED : []), ...(c.web ? ['WebSearch', 'WebFetch'] : []), ...(setup.allowedTools || [])];
     if (!c.web) args.push('--disallowedTools', 'WebSearch', 'WebFetch');
     if (c.workspace) args.push('--permission-mode', 'acceptEdits');
     if (allowed.length) args.push('--allowedTools', ...allowed);
@@ -227,6 +227,7 @@ export async function runCase(c, ctx) {
         first_ctx_tokens: d.firstCtx,
         out_tokens: d.usage.output_tokens,
         tool_calls: graded.reduce((n, t) => n + t.toolCalls, 0),
+        subagent_calls: graded.reduce((n, t) => n + t.tools.filter(x => x === 'Agent' || x === 'Task').length, 0),
         api_calls: d.apiCalls,
         words: words(allText),
         persona_tags: countPersonaTags(allText),

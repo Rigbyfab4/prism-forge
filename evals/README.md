@@ -13,6 +13,7 @@ Each case runs in a **fresh, empty home folder** (`HOME`/`USERPROFILE` point at 
 | `v2` | `prism-toggle-hookfix` | The toggle branch (as v3) with the routing hook fixed: it emits `hookSpecificOutput.additionalContext`. Prism's own hook prints a top-level `additionalContext`, which Claude Code ignores; its debug log says so on every prompt. So v3 vs v2 shows what the per-message routing directive adds once it actually arrives. (`prism-main-hookfix`, the same fix on `main`, remains available as an arm.) |
 | `v3` | `prism-toggle-on` | Prism from `origin/feature/enable-disable` (installs to `~/.claude/prism`, adds `disable`/`enable`/`status`), with the **prism-toggle mod** loaded via `--plugin-dir`. Enabled. |
 | `v4` | `prism-toggle-off` | Same as v3, then `prism-forge disable`. If "off" really means off, v4 should be indistinguishable from baseline. It also serves as an A/A control: it faces the same frozen baseline outputs as the Prism arms, so `summary.md` reports each arm's difference from v4 too. |
+| `v5` | `council` | No Prism. A subagent council: three custom subagents (advocate, critic, premortem) in `~/.claude/agents/`, same model as the session, plus a CLAUDE.md rule to consult them in parallel for decisions, plans and brainstorms and then synthesize, and to answer everything else directly. The alternative to Prism's single-voice personas. Its subagent tokens aren't in `cost (approx.)`; use Claude Code's reported cost. |
 
 Two things every arm gets, so the comparison is fair:
 
@@ -114,7 +115,7 @@ On a subscription, start with `--reps 1` (about 160 sessions and 420 judge calls
 Baseline first, because the other variants are judged against its frozen outputs in `flow/baseline/ref/` (a variant run before baseline refuses to start). Pilot rows are reused: resume skips (case, rep) pairs already done.
 
 ```powershell
-foreach ($v in "baseline","v1","v2","v3","v4") {
+foreach ($v in "baseline","v1","v2","v3","v4","v5") {
   node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 1 --concurrency 2
 }
 node --env-file=.env run-eval.mjs --flow flow-toggle --variant baseline --model claude-sonnet-5-5 --reps 2

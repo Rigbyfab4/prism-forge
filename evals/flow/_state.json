@@ -7,7 +7,8 @@
     "v1": "prism-main",
     "v2": "prism-toggle-hookfix",
     "v3": "prism-toggle-on",
-    "v4": "prism-toggle-off"
+    "v4": "prism-toggle-off",
+    "v5": "council"
   },
   "refs": {
     "prism-main": "fork/main",

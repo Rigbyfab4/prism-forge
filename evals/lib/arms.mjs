@@ -83,6 +83,59 @@ function setupToggleBranch(home, ref) {
   return { srcDir: inHome, pluginDirs: [modDir] };
 }
 
+// The subagent council: three independent members, each a custom subagent in
+// ~/.claude/agents/, and a CLAUDE.md rule for when to consult them. Same model
+// as the main session (model: inherit), so only the setup differs.
+const COUNCIL_AGENTS = {
+  advocate: {
+    description: 'Makes the strongest honest case FOR the most promising option, plan or idea. One of three independent council members (with critic and premortem) for decisions, plans and brainstorms.',
+    prompt: `You are the advocate on a three-member council. The main assistant gives you a user's request and any context.
+
+Make the strongest honest case for the most promising option (if there are several, rank them briefly and argue for the best one). Be concrete to this user's situation: the specific benefits, what must be true for it to work, and the cheapest way to check that before committing.
+
+Don't invent facts; say what you would need to know. Stay under 250 words. Return only your case.`,
+  },
+  critic: {
+    description: 'Makes the strongest honest case AGAINST the leading option, plan or idea: risks, hidden costs, simpler alternatives. One of three independent council members (with advocate and premortem).',
+    prompt: `You are the critic on a three-member council. The main assistant gives you a user's request and any context.
+
+Make the strongest honest case against the option the user is leaning toward, or the most obvious answer: concrete risks, hidden costs, and simpler or cheaper alternatives. End with the evidence that would change your mind.
+
+Don't invent problems to have something to say; if the obvious answer is sound, say so and name its weakest point. Don't invent facts. Stay under 250 words. Return only your critique.`,
+  },
+  premortem: {
+    description: 'Assumes the chosen approach failed 6-12 months from now and explains the most likely reasons, with early warning signs. One of three independent council members (with advocate and critic).',
+    prompt: `You are the pre-mortem member of a three-member council. The main assistant gives you a user's request and any context.
+
+Assume it is 6-12 months later and the most likely chosen approach has failed. List the three most plausible reasons it failed, most likely first. For each, give one early warning sign and one cheap way to prevent it.
+
+Be specific to this situation, not generic. Don't invent facts. Stay under 250 words. Return only your pre-mortem.`,
+  },
+};
+
+const COUNCIL_CLAUDE_MD = `# Council
+
+For requests that call for a decision, a recommendation between options, a plan, or brainstorming, consult a council before answering: launch the advocate, critic and premortem subagents in parallel (one message with three Agent calls), each given the user's request and any relevant context. They work independently and don't see each other's output.
+
+Then write one answer for the user: your recommendation, the strongest point from each member where it matters, where they disagree, and what evidence would settle it. Don't present the members as characters or quote them at length; the user wants a clear answer.
+
+Answer directly, without the council, for factual questions, calculations, writing tasks, explanations, tutoring and coding tasks.
+`;
+
+function setupCouncil(home) {
+  const agents = join(home, '.claude', 'agents');
+  mkdirSync(agents, { recursive: true });
+  for (const [name, a] of Object.entries(COUNCIL_AGENTS)) {
+    writeFileSync(join(agents, `${name}.md`),
+      // JSON strings are valid YAML double-quoted scalars, so ': ' in a
+      // description can't break the frontmatter
+      `---\nname: ${name}\ndescription: ${JSON.stringify(a.description)}\ntools: Read, Grep, Glob\nmodel: inherit\n---\n\n${a.prompt}\n`);
+  }
+  writeFileSync(join(home, '.claude', 'CLAUDE.md'), COUNCIL_CLAUDE_MD);
+  // The subagent tool must be usable without a prompt in headless runs
+  return { pluginDirs: [], allowedTools: ['Agent', 'Task'] };
+}
+
 export const ARMS = {
   none: {
     label: 'No Prism',
@@ -141,6 +194,16 @@ export const ARMS = {
       const r = setupToggleBranch(home, opts.refs?.['prism-toggle'] ?? this.ref);
       fixInjectHook(home);
       return r;
+    },
+  },
+
+  council: {
+    label: 'Subagent council (no Prism)',
+    description:
+      'No Prism. Three custom subagents (advocate, critic, premortem) in ~/.claude/agents and a CLAUDE.md rule: ' +
+      'consult them in parallel for decisions, plans and brainstorms, then synthesize; answer other requests directly.',
+    setup(home) {
+      return setupCouncil(home);
     },
   },
 
