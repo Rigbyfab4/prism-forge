@@ -14,7 +14,7 @@ Each case runs in a **fresh, empty home folder** (`HOME`/`USERPROFILE` point at 
 | `v3` | `prism-toggle-on` | Prism from `origin/feature/enable-disable` (installs to `~/.claude/prism`, adds `disable`/`enable`/`status`), with the **prism-toggle mod** loaded via `--plugin-dir`. Enabled. |
 | `v4` | `prism-toggle-off` | Same as v3, then `prism-forge disable`. If "off" really means off, v4 should be indistinguishable from baseline. |
 
-The mapping lives in `flow/_state.json` (`arms`, `refs`). Change `refs` to test other commits.
+The mapping lives in `flow/_state.json` (`arms`, `refs`). `refs` name git refs in your clone: they point at the `fork` remote (`Rigbyfab4/prism-forge`), which is where the toggle branch lives. Change them to test other commits or remotes. Preflight prints the exact commit each arm uses.
 
 **Two flows:**
 
@@ -39,7 +39,7 @@ Windows is needed for the toggle arms and flow: the mod hard-codes Windows paths
 
 - Node 20.6+ (for `--env-file`), git, and the `claude` CLI on PATH (or `CLAUDE_BIN` pointing at `claude.exe` or `cli.js`)
 - `python` on PATH (Prism's hooks call `python`, not `python3`; the Microsoft Store alias doesn't count) and `bash` (Git Bash on Windows)
-- The toggle branch fetched: `git fetch origin feature/enable-disable`
+- Your fork fetched as a remote named `fork` (`git fetch fork`), so `fork/main` and `fork/feature/enable-disable` exist
 - **Credentials, in `evals/.env`** (gitignored; copy `.env.example`). Each run uses a fresh empty home that can't see your normal Claude login, so the scripts read this file via `node --env-file=.env`:
   - **Subscription only (no API key):** set `CLAUDE_CODE_OAUTH_TOKEN`, created with `claude setup-token` in a normal terminal. The Claude Code runs *and* the judge go through Claude Code on your plan. The judge runs as `claude -p --json-schema` with no tools, in an empty temp home.
   - With API access instead: `ANTHROPIC_API_KEY`. If both are set, runs use the subscription and the judge uses the API.
@@ -53,9 +53,8 @@ Commands below are PowerShell, run from `evals/`. In Git Bash (and in a Claude C
 ### 0. Setup and free checks
 
 ```powershell
-git fetch origin
-git checkout claude/friendly-bohr-txjn97
-git fetch origin feature/enable-disable
+git fetch fork
+git switch --track fork/claude/friendly-bohr-txjn97
 cd evals
 npm install
 Copy-Item .env.example .env    # then open .env and fill it in

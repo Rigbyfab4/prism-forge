@@ -10,8 +10,8 @@
     "v4": "prism-toggle-off"
   },
   "refs": {
-    "prism-main": "main",
-    "prism-toggle": "origin/feature/enable-disable"
+    "prism-main": "fork/main",
+    "prism-toggle": "fork/feature/enable-disable"
   },
   "judge_model": "claude-opus-5-5",
   "metrics": [

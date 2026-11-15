@@ -6,20 +6,44 @@
     "baseline": "prism-toggle-on"
   },
   "refs": {
-    "prism-toggle": "origin/feature/enable-disable"
+    "prism-toggle": "fork/feature/enable-disable"
   },
   "judge": false,
   "metrics": [
-    { "id": "checks", "label": "Checks", "kind": "float", "scale": 1 }
+    {
+      "id": "checks",
+      "label": "Checks",
+      "kind": "float",
+      "scale": 1
+    }
   ],
   "perf_fields": [
-    { "id": "cost_usd", "label": "Cost", "unit": "$" },
-    { "id": "latency_s", "label": "Latency", "unit": "s" },
-    { "id": "persona_tags", "label": "Persona tags" },
-    { "id": "tagged_turns", "label": "Persona turns" }
+    {
+      "id": "cost_usd",
+      "label": "Cost",
+      "unit": "$"
+    },
+    {
+      "id": "latency_s",
+      "label": "Latency",
+      "unit": "s"
+    },
+    {
+      "id": "persona_tags",
+      "label": "Persona tags"
+    },
+    {
+      "id": "tagged_turns",
+      "label": "Persona turns"
+    }
   ],
   "harness_paths": [
-    "lib/eval-case.mjs", "lib/arms.mjs", "lib/claude.mjs", "lib/checks.mjs",
-    "lib/source.mjs", "lib/prices.mjs", "cases-toggle/toggle.json"
+    "lib/eval-case.mjs",
+    "lib/arms.mjs",
+    "lib/claude.mjs",
+    "lib/checks.mjs",
+    "lib/source.mjs",
+    "lib/prices.mjs",
+    "cases-toggle/toggle.json"
   ]
 }
