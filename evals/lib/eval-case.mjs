@@ -43,7 +43,16 @@ export async function loadCases(ctx) {
   }
   // EVAL_ONLY=id1,id2 or a category name, for pilots
   const only = process.env.EVAL_ONLY?.split(',').map(s => s.trim()).filter(Boolean);
-  return only?.length ? cases.filter(c => only.includes(c.id) || only.includes(c.category)) : cases;
+  const selected = only?.length ? cases.filter(c => only.includes(c.id) || only.includes(c.category)) : cases;
+  // Non-baseline variants are judged against baseline's frozen outputs: refuse
+  // before spending anything if any are missing
+  if (ctx.variant !== 'baseline' && st.judge !== false) {
+    const missing = selected.filter(c => c.rubric?.length && !existsSync(join(ctx.flow, 'baseline', 'ref', c.id)));
+    if (missing.length) {
+      throw new Error(`baseline has no frozen output yet for ${missing.length} case(s) (${missing.slice(0, 5).map(c => c.id).join(', ')}${missing.length > 5 ? ', ...' : ''}). Run --variant baseline for them first.`);
+    }
+  }
+  return selected;
 }
 
 const sh = (cmd, args, cwd, timeout = 120_000) =>
@@ -209,8 +218,12 @@ export async function runCase(c, ctx) {
     };
   } finally {
     if (!KEEP) {
-      rmSync(home, { recursive: true, force: true, maxRetries: 3 });
-      rmSync(ws, { recursive: true, force: true, maxRetries: 3 });
+      // A failed cleanup (e.g. read-only .git files on Windows) must not turn
+      // a finished, paid case into an error
+      for (const d of [home, ws]) {
+        try { rmSync(d, { recursive: true, force: true, maxRetries: 3 }); }
+        catch (e) { console.error(`warning: could not remove temp folder ${d}: ${e.code || e.message}`); }
+      }
     }
   }
 }

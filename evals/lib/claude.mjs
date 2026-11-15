@@ -43,6 +43,12 @@ const NESTING_VARS = [
 export function sessionEnv(home) {
   const env = homeEnv(home);
   for (const k of NESTING_VARS) delete env[k];
+  // With a subscription token present, runs bill to the subscription: drop the
+  // API key from the child (Claude Code would otherwise prefer it). The judge,
+  // in this process, still uses ANTHROPIC_API_KEY.
+  // Blank lines in .env arrive as empty strings: drop those rather than pass them
+  for (const k of ['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_BIN']) if (env[k] === '') delete env[k];
+  if (env.CLAUDE_CODE_OAUTH_TOKEN) delete env.ANTHROPIC_API_KEY;
   return env;
 }
 
