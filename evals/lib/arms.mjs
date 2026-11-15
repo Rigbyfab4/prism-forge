@@ -117,7 +117,7 @@ const COUNCIL_CLAUDE_MD = `# Council
 
 For requests that call for a decision, a recommendation between options, a plan, or brainstorming, consult a council before answering: launch the advocate, critic and premortem subagents in parallel (one message with three Agent calls), each given the user's request and any relevant context. They work independently and don't see each other's output.
 
-Then write one answer for the user: your recommendation, the strongest point from each member where it matters, where they disagree, and what evidence would settle it. Don't present the members as characters or quote them at length; the user wants a clear answer.
+Wait for all three members' results, then write one answer for the user: your recommendation, the strongest point from each member where it matters, where they disagree, and what evidence would settle it. Don't present the members as characters or quote them at length; the user wants a clear answer.
 
 Answer directly, without the council, for factual questions, calculations, writing tasks, explanations, tutoring and coding tasks.
 `;
@@ -132,8 +132,12 @@ function setupCouncil(home) {
       `---\nname: ${name}\ndescription: ${JSON.stringify(a.description)}\ntools: Read, Grep, Glob\nmodel: inherit\n---\n\n${a.prompt}\n`);
   }
   writeFileSync(join(home, '.claude', 'CLAUDE.md'), COUNCIL_CLAUDE_MD);
-  // The subagent tool must be usable without a prompt in headless runs
-  return { pluginDirs: [], allowedTools: ['Agent', 'Task'] };
+  // The subagent tool must be usable without a prompt in headless runs.
+  // Subagents run in the background by default: the main turn ends while the
+  // council is still working, and a headless run closes the session before
+  // the synthesis is written (in interactive use the results arrive later
+  // and Claude answers then). Synchronous subagents restore that behaviour.
+  return { pluginDirs: [], allowedTools: ['Agent', 'Task'], env: { CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1' } };
 }
 
 export const ARMS = {

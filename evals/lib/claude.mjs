@@ -77,7 +77,7 @@ export function runSession(o) {
     ...o.args,
   ];
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd: o.cwd, env: sessionEnv(o.home), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(cmd, args, { cwd: o.cwd, env: { ...sessionEnv(o.home), ...(o.env || {}) }, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     const events = [];
     const turnResults = [];
     let stderr = '';

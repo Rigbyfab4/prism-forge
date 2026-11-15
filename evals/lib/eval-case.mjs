@@ -163,7 +163,7 @@ export async function runCase(c, ctx) {
     const t0 = Date.now();
     let sess;
     try {
-      sess = await runSession({ home, cwd: ws, model: ctx.model, args, turns: c.turns, onControl, timeoutMs, debugFile });
+      sess = await runSession({ home, cwd: ws, model: ctx.model, args, turns: c.turns, onControl, timeoutMs, debugFile, env: setup.env });
     } catch (e) {
       e.failure_class ??= 'harness';
       throw e;
@@ -202,7 +202,7 @@ export async function runCase(c, ctx) {
     if (outTokens !== d.usage.output_tokens) d.usage.output_tokens = outTokens;
 
     const transcript = [
-      { role: 'system', content: `[harness] arm=${armId} (${arm.label}); model=${ctx.model}; plugin dirs: ${(setup.pluginDirs || []).length}; toggles: ${JSON.stringify(toggles)}` },
+      { role: 'system', content: `[harness] arm=${armId} (${arm.label}); model=${ctx.model}; plugin dirs: ${(setup.pluginDirs || []).length}; extra env: ${JSON.stringify(setup.env || {})}; toggles: ${JSON.stringify(toggles)}` },
       ...toTranscript(sess.events),
       ...(coding ? [{ role: 'system', content: `[harness] diff ${coding.diffStat || '(none)'}\nchanged: ${coding.changedFiles.join(', ')}\n\nhidden tests:\n${coding.tests?.output ?? 'n/a'}\n\n${coding.diff.slice(0, 20_000)}` }] : []),
       { role: 'system', content: `[harness] per-turn result events: ${JSON.stringify(turnTotals)}` },

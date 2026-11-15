@@ -168,7 +168,8 @@ for (const v of variants) {
       (byCat[k] ??= []).push((r.subagent_calls || 0) > 0 ? 1 : 0);
     }
     const all = Object.values(byCat).flat();
-    notes.push(`- **${v} (council)**: consulted subagents in ${pct(mean(all))} of sessions (${Object.entries(byCat).sort().map(([k, xs]) => `${k} ${pct(mean(xs))}`).join(', ')}). "cost (approx.)" leaves out subagent tokens; use Claude Code's reported cost for this arm.`);
+    const wordsWhen = (used) => median(Object.values(rows[v]).flat().filter(r => ((r.subagent_calls || 0) > 0) === used).map(r => r.words).filter(x => typeof x === 'number'));
+    notes.push(`- **${v} (council)**: consulted subagents in ${pct(mean(all))} of sessions (${Object.entries(byCat).sort().map(([k, xs]) => `${k} ${pct(mean(xs))}`).join(', ')}). "cost (approx.)" leaves out subagent tokens; use Claude Code's reported cost for this arm. Median answer length when the council was consulted: ${int(wordsWhen(true))} words; when not: ${int(wordsWhen(false))}. A very short consulted answer means the synthesis never got written.`);
   }
   if (shouldBeOn && st.cases_dir === 'cases' && tagged < 0.2) notes.push(`- **${v} (${armId})**: persona tags on only ${pct(tagged)} of turns. Prism's instructions may not be reaching the model; any "no difference" result for this arm says little about Prism itself. Check the debug-log excerpt at the end of a trace.`);
   if (!shouldBeOn && tagged > 0.05) notes.push(`- **${v} (${armId})**: persona tags on ${pct(tagged)} of turns although Prism should be off here.`);
