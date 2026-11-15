@@ -185,11 +185,22 @@ export async function runCase(c, ctx) {
     const graded = d.perTurn.filter(t => !t.control);
     const allText = graded.map(t => t.text).join('\n\n');
     const lastResult = sess.turnResults.filter(Boolean).at(-1);
+    // Each turn's own result event, kept raw: whether Claude Code reports usage
+    // and cost per turn or cumulatively in stream-json is checked from these
+    const turnTotals = sess.turnResults.map((r, i) => (r && !r.control)
+      ? { turn: i + 1, cost: r.total_cost_usd ?? null, out: r.usage?.output_tokens ?? null, in: r.usage?.input_tokens ?? null,
+          cache_read: r.usage?.cache_read_input_tokens ?? null, cache_write: r.usage?.cache_creation_input_tokens ?? null }
+      : null).filter(Boolean);
+    // A single answered turn makes the result event authoritative for output
+    const outTokens = turnTotals.length === 1 && Number.isFinite(turnTotals[0].out)
+      ? Math.max(turnTotals[0].out, d.usage.output_tokens) : d.usage.output_tokens;
+    if (outTokens !== d.usage.output_tokens) d.usage.output_tokens = outTokens;
 
     const transcript = [
       { role: 'system', content: `[harness] arm=${armId} (${arm.label}); model=${ctx.model}; plugin dirs: ${(setup.pluginDirs || []).length}; toggles: ${JSON.stringify(toggles)}` },
       ...toTranscript(sess.events),
       ...(coding ? [{ role: 'system', content: `[harness] diff ${coding.diffStat || '(none)'}\nchanged: ${coding.changedFiles.join(', ')}\n\nhidden tests:\n${coding.tests?.output ?? 'n/a'}\n\n${coding.diff.slice(0, 20_000)}` }] : []),
+      { role: 'system', content: `[harness] per-turn result events: ${JSON.stringify(turnTotals)}` },
       { role: 'system', content: `[harness] debug log: ${dbg.lines} hook/plugin lines\n${dbg.excerpt}` },
     ];
 
@@ -207,6 +218,7 @@ export async function runCase(c, ctx) {
       perf: {
         cost_usd: costUsd(d.model, d.usage),
         cc_cost_usd: lastResult?.total_cost_usd ?? null,
+        cc_cost_sum: turnTotals.reduce((a, t) => a + (t.cost || 0), 0) || null,
         first_ctx_tokens: d.firstCtx,
         out_tokens: d.usage.output_tokens,
         tool_calls: graded.reduce((n, t) => n + t.toolCalls, 0),

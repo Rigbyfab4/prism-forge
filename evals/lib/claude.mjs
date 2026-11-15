@@ -152,7 +152,12 @@ export function digest(events, turns) {
     const t = perTurn[ev._turn];
     const m = ev.message || {};
     if (m.model && !model) model = m.model;
-    if (m.id && m.usage) seenMsg.set(m.id, { model: m.model, usage: m.usage, turn: ev._turn });
+    // The stream repeats a message once per content block, and early copies can
+    // carry a partial output count: keep the copy with the highest one
+    if (m.id && m.usage) {
+      const prev = seenMsg.get(m.id);
+      if (!prev || (m.usage.output_tokens || 0) >= (prev.usage.output_tokens || 0)) seenMsg.set(m.id, { model: m.model, usage: m.usage, turn: ev._turn });
+    }
     for (const b of m.content || []) {
       if (!t) continue;
       if (b.type === 'text' && b.text) t.text += (t.text ? '\n\n' : '') + b.text;

@@ -128,6 +128,20 @@ export const ARMS = {
     },
   },
 
+  'prism-toggle-hookfix': {
+    label: 'Prism toggle branch, on, hook fixed',
+    description:
+      'Toggle branch with the mod, enabled, plus the same one-line UserPromptSubmit fix as prism-main-hookfix. ' +
+      'The branch no longer auto-loads persona files, so the per-message routing directive carries more weight ' +
+      'there; this arm shows whether fixing its output shape changes behaviour.',
+    ref: 'origin/feature/enable-disable',
+    setup(home, opts) {
+      const r = setupToggleBranch(home, opts.refs?.['prism-toggle'] ?? this.ref);
+      fixInjectHook(home);
+      return r;
+    },
+  },
+
   'prism-toggle-off': {
     label: 'Prism toggle branch, off',
     description:

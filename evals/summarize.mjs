@@ -70,29 +70,39 @@ for (const v of variants) {
 
 // --- quality ----------------------------------------------------------------
 const base = variants[0];
+// An arm with Prism installed but switched off is an A/A control: judged
+// against the same frozen baseline outputs as the Prism arms, so comparing
+// against it cancels the luck of the single frozen baseline sample per case
+const ctrl = variants.find(v => v !== base && st.arms[v] === 'prism-toggle-off');
 p();
 p('## Quality');
 p();
 p('Case-level means (reps averaged within a case first), with 95% bootstrap CIs over cases. ' +
-  '"Δ vs ' + base + '" is the paired per-case difference. A CI that includes 0 means no detectable difference at this sample size.');
+  '"Δ vs ' + base + '" is the paired per-case difference. A CI that includes 0 means no detectable difference at this sample size.' +
+  (ctrl ? ` "Δ vs ${ctrl}" compares against the Prism-off control arm, which faces the same frozen ${base} outputs; for \`win\` it is the fairer contrast, and ${ctrl}'s own distance from 0.5 shows how much a no-change arm moves by chance.` : ''));
 p();
 for (const m of metricIds) {
   p(`### ${(st.metrics.find(x => x.id === m)?.label) ?? m}`);
   p();
-  p(`| variant | mean | 95% CI | Δ vs ${base} | Δ 95% CI | n |`);
-  p('|---|---|---|---|---|---|');
-  for (const v of variants) {
-    const vals = [], deltas = [];
+  p(`| variant | mean | 95% CI | Δ vs ${base} | Δ 95% CI |${ctrl ? ` Δ vs ${ctrl} | Δ 95% CI |` : ''} n |`);
+  p(`|---|---|---|---|---|${ctrl ? '---|---|' : ''}---|`);
+  const paired = (v, ref) => {
+    const ds = [];
     for (const [id, reps] of Object.entries(rows[v])) {
       const x = caseMean(reps, `grade.${m}`);
-      if (!Number.isFinite(x)) continue;
-      vals.push(x);
-      const b = rows[base][id] ? caseMean(rows[base][id], `grade.${m}`) : NaN;
-      if (Number.isFinite(b) && v !== base) deltas.push(x - b);
+      const r = rows[ref]?.[id] ? caseMean(rows[ref][id], `grade.${m}`) : NaN;
+      if (Number.isFinite(x) && Number.isFinite(r)) ds.push(x - r);
     }
+    const [lo, hi] = bootCI(ds);
+    return { d: mean(ds), lo, hi };
+  };
+  for (const v of variants) {
+    const vals = Object.values(rows[v]).map(reps => caseMean(reps, `grade.${m}`)).filter(Number.isFinite);
     const [lo, hi] = bootCI(vals);
-    const [dlo, dhi] = bootCI(deltas);
-    p(`| ${v} | ${f2(mean(vals))} | ${f2(lo)}–${f2(hi)} | ${v === base ? '—' : f2(mean(deltas))} | ${v === base ? '—' : `${f2(dlo)}–${f2(dhi)}`} | ${vals.length} |`);
+    const b = v === base ? null : paired(v, base);
+    const c = ctrl && v !== base && v !== ctrl ? paired(v, ctrl) : null;
+    p(`| ${v} | ${f2(mean(vals))} | ${f2(lo)}–${f2(hi)} | ${b ? f2(b.d) : '—'} | ${b ? `${f2(b.lo)}–${f2(b.hi)}` : '—'} |` +
+      (ctrl ? ` ${c ? f2(c.d) : '—'} | ${c ? `${f2(c.lo)}–${f2(c.hi)}` : '—'} |` : '') + ` ${vals.length} |`);
   }
   p();
 }
@@ -126,9 +136,9 @@ if (cats.length > 1) {
 // --- cost, context, behaviour -----------------------------------------------
 p('## Cost, context and behaviour');
 p();
-p('Absolute numbers per session (median over all reps). "Start context" is the input size of the first model request: system prompt, CLAUDE.md, auto-loaded rules and hook context. It is where Prism\'s context overhead shows up.');
+p('Absolute numbers per session (median over all reps). "Start context" is the input size of the first model request: system prompt, CLAUDE.md, auto-loaded rules and hook context. It is where Prism\'s context overhead shows up. Prefer "Claude Code reported cost" over "cost (approx.)", which is rebuilt from streamed usage and list prices.');
 p();
-p('| variant | cost | Claude Code reported cost | judge cost | start context (tok) | out tok | latency s | words | tool calls | turns with persona tags | first turn sitrep |');
+p('| variant | cost (approx.) | Claude Code reported cost | judge cost | start context (tok) | out tok | latency s | words | tool calls | turns with persona tags | first turn sitrep |');
 p('|---|---|---|---|---|---|---|---|---|---|---|');
 const perfOf = {};
 for (const v of variants) {

@@ -12,7 +12,9 @@ Each case runs in a **fresh, empty home folder** (`HOME`/`USERPROFILE` point at 
 | `v1` | `prism-main` | Prism from `main`, installed with `prism-forge install` as shipped. |
 | `v2` | `prism-main-hookfix` | Same as v1, plus one fix: the UserPromptSubmit hook emits `hookSpecificOutput.additionalContext` (the documented shape) instead of a top-level `additionalContext`. v1 vs v2 shows whether the per-message routing directive reaches the model at all. |
 | `v3` | `prism-toggle-on` | Prism from `origin/feature/enable-disable` (installs to `~/.claude/prism`, adds `disable`/`enable`/`status`), with the **prism-toggle mod** loaded via `--plugin-dir`. Enabled. |
-| `v4` | `prism-toggle-off` | Same as v3, then `prism-forge disable`. If "off" really means off, v4 should be indistinguishable from baseline. |
+| `v4` | `prism-toggle-off` | Same as v3, then `prism-forge disable`. If "off" really means off, v4 should be indistinguishable from baseline. It also serves as an A/A control: it faces the same frozen baseline outputs as the Prism arms, so `summary.md` reports each arm's difference from v4 too. |
+
+Optional arm, not mapped by default: `prism-toggle-hookfix` (v3 plus the v2 hook fix). To use it instead of v2, set `"v2": "prism-toggle-hookfix"` under `arms` in `flow/_state.json`. On the toggle branch the persona files aren't auto-loaded, so the per-message routing directive matters more there.
 
 The mapping lives in `flow/_state.json` (`arms`, `refs`). `refs` name git refs in your clone: they point at the `fork` remote (`Rigbyfab4/prism-forge`), which is where the toggle branch lives. Change them to test other commits or remotes. Preflight prints the exact commit each arm uses.
 
