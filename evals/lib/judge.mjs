@@ -71,6 +71,14 @@ async function callApi(model, user, schema, usage) {
 
 export const USAGE_LIMIT = /usage limit|limit (reached|exceeded)|out of (credits|usage)|quota/i;
 
+// Claude Code's --json-schema validator doesn't know the 2020-12 meta-schema
+// zod emits by default: generate draft-07 and drop the $schema tag, as in the
+// CLI's own help example.
+export function cliSchema(schema) {
+  const { $schema, ...rest } = z.toJSONSchema(schema, { target: 'draft-7' });
+  return rest;
+}
+
 // One-shot `claude -p` with no tools, an empty home and a JSON schema. The
 // prompt goes over stdin (Windows caps a command line at ~32K characters).
 async function callClaude(model, user, schema, usage) {
@@ -78,7 +86,7 @@ async function callClaude(model, user, schema, usage) {
   const { cmd, pre } = resolveClaude();
   const args = [...pre, '-p', '--output-format', 'json', '--model', model,
     '--system-prompt', SYSTEM, '--tools', '', '--strict-mcp-config', '--no-session-persistence',
-    '--json-schema', JSON.stringify(z.toJSONSchema(schema))];
+    '--json-schema', JSON.stringify(cliSchema(schema))];
   try {
     const { code, stdout, stderr } = await new Promise((resolve, reject) => {
       const child = spawn(cmd, args, { cwd: home, env: sessionEnv(home), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });

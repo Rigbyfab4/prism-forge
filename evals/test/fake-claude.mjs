@@ -31,6 +31,11 @@ if (args.includes('--json-schema')) {
   process.stdin.on('data', c => { input += c; });
   process.stdin.on('end', () => {
     const schema = JSON.parse(args[args.indexOf('--json-schema') + 1]);
+    // Mirror the real CLI, which rejects the 2020-12 meta-schema
+    if (String(schema.$schema || '').includes('2020-12')) {
+      process.stderr.write(`Error: --json-schema is not a valid JSON Schema: no schema with key or ref "${schema.$schema}"\n`);
+      process.exit(1);
+    }
     let out;
     if (schema.properties?.winner) out = { reasoning: 'fake judge', winner: 'tie' };
     else {
