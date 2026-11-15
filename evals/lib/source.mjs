@@ -18,7 +18,7 @@ export function resolveRef(ref) {
     return git(['rev-parse', '--verify', `${ref}^{commit}`]);
   } catch {
     throw new Error(
-      `git ref '${ref}' not found. Fetch it first (git fetch origin) or set "refs" in _state.json.`);
+      `git ref '${ref}' not found. Fetch its remote first (e.g. git fetch fork) or set "refs" in _state.json.`);
   }
 }
 
