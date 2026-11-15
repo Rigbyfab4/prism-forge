@@ -18,7 +18,7 @@ The mapping lives in `flow/_state.json` (`arms`, `refs`). Change `refs` to test 
 
 **Two flows:**
 
-- `flow/`: the main A/B flow. 29 cases across 6 categories (`cases/`): tutoring (multi-turn, scripted wrong answers), coding (real workspaces, hidden tests), general, travel, 3D printing, brainstorming. Several cases contain words that trip Prism's router ("cron jobs", "spike", "status", "refactor", "war room", "what if"), so misrouting costs show up.
+- `flow/`: the main A/B flow. 32 cases across 7 categories (`cases/`): tutoring (multi-turn, scripted wrong answers), coding (real workspaces, hidden tests), general, travel, 3D printing, brainstorming, and research. Three cases (`cases/real-prompts.json`, tagged `source:user-history`) are your own prompts from past sessions: the VAR question, Oregon Trail Tay, and the Witch Walker check (its first turn lightly adapted; see the case's `notes`). Several cases contain words that trip Prism's router ("cron jobs", "spike", "status", "refactor", "war room", "what if"), so misrouting costs show up.
 - `flow-toggle/`: mid-session switching on the toggle branch (`cases-toggle/`). It sends `/prism off` and `/prism on` through the mod and checks that persona tags stop and restart. One case toggles with the CLI only (no mod), which isolates what the mod's "PRISM was just turned off" notice adds. After each toggle the harness confirms with `prism-forge status` that the switch happened. If it didn't, the attempt is logged as `toggle_not_applied` and not scored.
 
 ## How it's graded
@@ -74,7 +74,7 @@ node build-report-lite.mjs flow
 
 - Open `flow/summary.md` and `flow/report.html`, and read a few traces in `flow/<variant>/traces/`. Each row's `explanation` in `results.jsonl` holds the judge's reasoning per criterion. **Would you have graded any of them differently?** If so, fix the rubric in `cases/*.json` before the full run.
 - Check "Did each arm behave like itself?" in the summary. If v1/v3 show persona tags on few turns, Prism isn't reaching the model, and the debug-log excerpt at the end of a trace shows why.
-- Measure cost from the pilot: `summary.md` reports measured spend. Full run ≈ (pilot spend ÷ pilot sessions) × 29 cases × reps × arms. Use measured numbers, not guesses.
+- Measure cost from the pilot: `summary.md` reports measured spend. Full run ≈ (pilot spend ÷ pilot sessions) × 32 cases × reps × arms. Use measured numbers, not guesses.
 
 ### 2. Full run
 
@@ -111,10 +111,10 @@ The harness approval and the go-ahead for the full run should come from you.
 
 ## Limits worth knowing before trusting a number
 
-- **Synthesized prompts.** The cases were written for this eval, not taken from your history. Adding 5–10 of your real prompts (same JSON shape) makes the result more about your work.
-- **Noise floor.** 29 cases × 2 reps can resolve differences of roughly 10–15 points on a 0–1 scale. Smaller effects will show CIs that include 0. That means "not detectable here", not "no effect".
+- **Mostly synthesized prompts.** 29 of 32 cases were written for this eval; 3 come from your history. Adding more of your real prompts (same JSON shape) makes the result more about your work. Most of your past cloud-session messages were follow-ups that only make sense mid-conversation; your local Claude Code history on your PC (`~/.claude/projects/`) is a richer source.
+- **Noise floor.** 32 cases × 2 reps can resolve differences of roughly 10–15 points on a 0–1 scale. Smaller effects will show CIs that include 0. That means "not detectable here", not "no effect".
 - **Clean-room setup.** Arms run without your own CLAUDE.md, settings, MCP servers or plugins. That isolates Prism's effect, but it is not your exact daily setup.
-- **Web tools are off** (`WebSearch`, `WebFetch` disallowed) in every arm, so travel answers rely on model knowledge. This keeps the arms comparable.
+- **Web tools are off** (`WebSearch`, `WebFetch` disallowed) except in cases marked `"web": true` (the two research cases from your history). A case's setting is identical in every arm, so arms stay comparable, but web cases are noisier run to run. Travel answers rely on model knowledge.
 - **Costs** use list prices with 5-minute cache-write pricing. Claude Code may use 1-hour cache writes, so `cost_usd` can read slightly low. Claude Code's own figure is shown beside it (`cc_cost_usd`).
 - **The judge is a model.** Its order consistency is reported. Spot-check its reasoning in the pilot before relying on it.
 

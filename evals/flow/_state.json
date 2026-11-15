@@ -1,6 +1,6 @@
 {
   "flow": "prism-ab",
-  "description": "Claude Code with and without Prism Forge, across tutoring, coding, general, travel, 3D printing and brainstorming.",
+  "description": "Claude Code with and without Prism Forge, across tutoring, coding, general, travel, 3D printing, brainstorming and research (including prompts from the user's own history).",
   "cases_dir": "cases",
   "arms": {
     "baseline": "none",
@@ -15,24 +15,75 @@
   },
   "judge_model": "claude-opus-5-5",
   "metrics": [
-    { "id": "win", "label": "Win vs none", "kind": "float", "scale": 1 },
-    { "id": "rubric", "label": "Rubric", "kind": "float", "scale": 1 },
-    { "id": "checks", "label": "Checks", "kind": "float", "scale": 1 }
+    {
+      "id": "win",
+      "label": "Win vs none",
+      "kind": "float",
+      "scale": 1
+    },
+    {
+      "id": "rubric",
+      "label": "Rubric",
+      "kind": "float",
+      "scale": 1
+    },
+    {
+      "id": "checks",
+      "label": "Checks",
+      "kind": "float",
+      "scale": 1
+    }
   ],
   "perf_fields": [
-    { "id": "cost_usd", "label": "Cost", "unit": "$" },
-    { "id": "latency_s", "label": "Latency", "unit": "s" },
-    { "id": "first_ctx_tokens", "label": "Start context" },
-    { "id": "out_tokens", "label": "Out tokens" },
-    { "id": "words", "label": "Words" },
-    { "id": "tool_calls", "label": "Tool calls" },
-    { "id": "tagged_turns", "label": "Persona turns" },
-    { "id": "sitrep", "label": "Sitrep" }
+    {
+      "id": "cost_usd",
+      "label": "Cost",
+      "unit": "$"
+    },
+    {
+      "id": "latency_s",
+      "label": "Latency",
+      "unit": "s"
+    },
+    {
+      "id": "first_ctx_tokens",
+      "label": "Start context"
+    },
+    {
+      "id": "out_tokens",
+      "label": "Out tokens"
+    },
+    {
+      "id": "words",
+      "label": "Words"
+    },
+    {
+      "id": "tool_calls",
+      "label": "Tool calls"
+    },
+    {
+      "id": "tagged_turns",
+      "label": "Persona turns"
+    },
+    {
+      "id": "sitrep",
+      "label": "Sitrep"
+    }
   ],
   "harness_paths": [
-    "lib/eval-case.mjs", "lib/arms.mjs", "lib/claude.mjs", "lib/checks.mjs",
-    "lib/judge.mjs", "lib/source.mjs", "lib/prices.mjs",
-    "cases/tutoring.json", "cases/coding.json", "cases/general.json",
-    "cases/travel.json", "cases/printing.json", "cases/brainstorm.json"
+    "lib/eval-case.mjs",
+    "lib/arms.mjs",
+    "lib/claude.mjs",
+    "lib/checks.mjs",
+    "lib/judge.mjs",
+    "lib/source.mjs",
+    "lib/prices.mjs",
+    "cases/tutoring.json",
+    "cases/coding.json",
+    "cases/general.json",
+    "cases/travel.json",
+    "cases/printing.json",
+    "cases/brainstorm.json",
+    "cases/real-prompts.json"
   ]
 }

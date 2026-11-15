@@ -120,8 +120,13 @@ export async function runCase(c, ctx) {
     }
     gitInit(ws);
 
-    const args = ['--strict-mcp-config', '--disallowedTools', 'WebSearch', 'WebFetch'];
-    if (c.workspace) args.push('--permission-mode', 'acceptEdits', '--allowedTools', ...CODING_ALLOWED);
+    // Web tools are off unless the case asks for them ("web": true), and a
+    // case's setting is the same in every arm, so arms stay comparable
+    const args = ['--strict-mcp-config'];
+    const allowed = [...(c.workspace ? CODING_ALLOWED : []), ...(c.web ? ['WebSearch', 'WebFetch'] : [])];
+    if (!c.web) args.push('--disallowedTools', 'WebSearch', 'WebFetch');
+    if (c.workspace) args.push('--permission-mode', 'acceptEdits');
+    if (allowed.length) args.push('--allowedTools', ...allowed);
     for (const d of setup.pluginDirs || []) args.push('--plugin-dir', d);
 
     // Toggle turns: verify the switch really happened before the next prompt

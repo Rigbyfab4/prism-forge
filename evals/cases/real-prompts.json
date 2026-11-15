@@ -1,0 +1,61 @@
+[
+  {
+    "id": "real-var-multicollinearity",
+    "category": "tutoring",
+    "tags": ["source:user-history", "verbatim", "misconception", "econometrics"],
+    "notes": "Your prompt from a past session, unchanged (typos kept). VAR variables are chosen because they interact; collinearity among the lagged regressors inflates individual coefficient variances but doesn't bias OLS estimates, and matters little for forecasts, joint tests and impulse responses. Practical concerns: parameter count (k^2 * p) and exact collinearity.",
+    "turns": [
+      "I was warned that VAR models are sensitive to multicolinearity.  Don't you want to pick variables that are related in a Var model?  What am I missing?"
+    ],
+    "checks": [
+      { "id": "names_consequence", "type": "regex", "pattern": "standard errors?|variances?|imprecis|unstable|wide confidence" }
+    ],
+    "rubric": [
+      { "id": "resolves_tension", "text": "Resolves the apparent contradiction: VAR variables are supposed to be related (dynamic interdependence is the point), and the warning concerns what collinearity among the regressors does, not a reason to pick unrelated variables." },
+      { "id": "correct_consequence", "text": "States correctly that multicollinearity makes individual coefficient estimates imprecise (inflated variances or standard errors) without biasing them, and matters little for forecasting." },
+      { "id": "how_vars_are_read", "text": "Notes that VAR results are usually read through joint tests (e.g. Granger causality), impulse responses or variance decompositions rather than individual coefficients, which is why collinearity matters less than the warning suggests." },
+      { "id": "real_risks_and_remedies", "text": "Names the concerns that do matter in practice, such as overparameterization (many coefficients relative to observations) or exact collinearity, with at least one remedy (lag selection by information criteria, fewer variables, shrinkage or Bayesian VAR)." },
+      { "id": "no_errors", "text": "Makes no false claims (e.g. that collinearity biases the coefficients, or that VAR variables should be chosen to be uncorrelated)." }
+    ],
+    "pairwise_focus": "Which answer would leave this student clearly understanding what they were missing, with nothing wrong in it?"
+  },
+  {
+    "id": "real-oregon-trail-tay",
+    "category": "research",
+    "tags": ["source:user-history", "verbatim", "web", "multi-turn"],
+    "web": true,
+    "notes": "Your two prompts from a past session, unchanged. Web tools are on for this case in every arm. The rubric grades how claims are sourced and hedged, not specific facts, which change and which this eval can't verify.",
+    "turns": [
+      "Who was behind Oregon Trail Tay on Instagram?  Will a season three be forthcoming?",
+      "Username is oregontrailtay.  see also oregontrailtay.com"
+    ],
+    "checks": [
+      { "id": "cites_something", "type": "regex", "turn": "all", "pattern": "https?://|\\]\\(" }
+    ],
+    "rubric": [
+      { "id": "grounded", "text": "Bases its claims on sources it actually found and links or names them, rather than answering from memory." },
+      { "id": "no_invented_creator", "text": "Does not name a specific person as the creator unless a cited source says so; if the creator isn't publicly identified, says that plainly." },
+      { "id": "season_three_hedged", "text": "Separates what sources confirm about seasons from speculation about a third season, and does not invent dates or announcements." },
+      { "id": "uses_followup", "text": "In the second turn, actually uses the handle and website the user supplied, and reports what was found there or that a page couldn't be accessed." },
+      { "id": "direct", "text": "Answers the user's two questions directly, without padding." }
+    ]
+  },
+  {
+    "id": "real-witch-walker-series",
+    "category": "research",
+    "tags": ["source:user-history", "adapted", "web", "multi-turn", "books"],
+    "web": true,
+    "notes": "Adapted from your past session: the original first prompt began 'Use your book series skill to...'; that skill isn't installed in the eval's clean home, so the clause is dropped. The second turn is verbatim. Web tools on in every arm. The rubric doesn't assert release facts.",
+    "turns": [
+      "Check the series status of Witch Walker by Charissa Weeks.",
+      "New check: Hide the witches. Not sure if it’s the same author."
+    ],
+    "checks": [],
+    "rubric": [
+      { "id": "book_list", "text": "Lists the books in the Witch Walker series that it could verify, with each one's status (published, announced, or unknown)." },
+      { "id": "complete_or_not", "text": "States clearly whether the series is complete, ongoing, or unclear, since that is what deciding whether to start it depends on." },
+      { "id": "no_invented_facts", "text": "Does not present unverified titles or release dates as confirmed; marks what it couldn't verify and names its sources." },
+      { "id": "author_checked", "text": "In the second turn, checks and states whether 'Hide the Witches' is by Charissa Weeks rather than assuming either way, then gives that series' status." }
+    ]
+  }
+]
