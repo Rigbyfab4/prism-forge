@@ -105,6 +105,7 @@ foreach ($v in "baseline","v1","v2","v3","v4") {
   node --env-file=.env run-eval.mjs --flow flow --variant $v --model claude-sonnet-5-5 --reps 2 --concurrency 2
 }
 node --env-file=.env run-eval.mjs --flow flow-toggle --variant baseline --model claude-sonnet-5-5 --reps 3
+node --env-file=.env run-eval.mjs --flow flow-toggle --variant v1 --model claude-sonnet-5-5 --reps 3
 node summarize.mjs --flow flow
 node summarize.mjs --flow flow-toggle
 node build-report-lite.mjs flow

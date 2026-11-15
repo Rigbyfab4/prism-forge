@@ -1,9 +1,10 @@
 {
   "flow": "prism-toggle",
-  "description": "Mid-session on/off switching on the feature/enable-disable branch: through the prism-toggle mod (/prism) and through the CLI alone.",
+  "description": "Mid-session on/off switching on the feature/enable-disable branch: through the prism-toggle mod (/prism) and through the CLI alone. v1 repeats it with the UserPromptSubmit hook output fixed.",
   "cases_dir": "cases-toggle",
   "arms": {
-    "baseline": "prism-toggle-on"
+    "baseline": "prism-toggle-on",
+    "v1": "prism-toggle-hookfix"
   },
   "refs": {
     "prism-toggle": "fork/feature/enable-disable"
