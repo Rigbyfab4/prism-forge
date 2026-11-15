@@ -113,6 +113,8 @@ node build-report-lite.mjs flow
 
 Failed attempts go to `errors.jsonl` with a failure class and are retried the next time you run the same command. Useful flags: `--concurrency N` (default 4), `--timeout-s N` per session (default 1800). Set `EVAL_KEEP=1` to keep the temp home and workspace folders for inspection.
 
+The toggle flow has two variants: `baseline` is the toggle branch as written, `v1` the same with the routing hook's output fixed. v1 isn't judged against baseline, so the order doesn't matter. In the pilot, `/prism off` through the mod worked, a CLI-only `disable` didn't stop personas mid-conversation, and `/prism on` didn't bring them back; v1 tests whether the hook fix changes that last result.
+
 Reading the toggle flow: `on_before` failing means Prism wasn't producing persona tags even while on, so the off checks prove nothing. Compare `toggle-off-via-mod` with `toggle-off-via-cli` to see what the mod's notice adds.
 
 ## Running it with Claude Code on your PC
